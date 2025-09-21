@@ -293,40 +293,52 @@ def create_charting_routes(nse_client: NSEClient):
             return np.random.uniform(0.3, 0.7)  # Random if calculation fails
     
     def generate_analysis_reasons(df, current, prev, decision):
-        """Generate analysis reasons from NSE data"""
+        """Generate analysis reasons from NSE data matching the decision"""
         reasons = []
+        price_change = (current['close'] - prev['close']) / prev['close'] * 100
         
-        # Price trend (handle NaN values)
-        if (not pd.isna(current['sma_5']) and not pd.isna(current['sma_20']) and 
-            current['close'] > current['sma_5'] > current['sma_20']):
-            reasons.append("Strong upward trend - price above both SMAs")
-        elif (not pd.isna(current['sma_5']) and not pd.isna(current['sma_20']) and 
-              current['close'] < current['sma_5'] < current['sma_20']):
-            reasons.append("Strong downward trend - price below both SMAs")
+        # Decision-specific reasons
+        if decision == "BUY":
+            if (not pd.isna(current['sma_5']) and not pd.isna(current['sma_20']) and 
+                current['close'] > current['sma_5'] > current['sma_20']):
+                reasons.append("Strong upward trend - price above both SMAs")
+            elif price_change > 2:
+                reasons.append(f"Strong bullish momentum (+{price_change:.1f}%)")
+            elif not pd.isna(current['rsi']) and current['rsi'] < 30:
+                reasons.append("Oversold bounce opportunity")
         
-        # RSI analysis
-        if not pd.isna(current['rsi']):
-            if current['rsi'] > 70:
-                reasons.append("Overbought conditions (RSI > 70)")
-            elif current['rsi'] < 30:
-                reasons.append("Oversold conditions (RSI < 30)")
+        elif decision == "SELL":
+            if (not pd.isna(current['sma_5']) and not pd.isna(current['sma_20']) and 
+                current['close'] < current['sma_5'] < current['sma_20']):
+                reasons.append("Strong downward trend - price below both SMAs")
+            elif price_change < -2:
+                reasons.append(f"Strong bearish momentum ({price_change:.1f}%)")
+            elif not pd.isna(current['rsi']) and current['rsi'] > 70:
+                reasons.append("Overbought conditions - potential reversal")
         
         # Volume analysis
         if not pd.isna(current['volume_sma']) and current['volume_sma'] > 0:
             volume_ratio = current['volume'] / current['volume_sma']
             if volume_ratio > 1.5:
-                reasons.append(f"High volume activity ({volume_ratio:.1f}x average)")
-            elif volume_ratio < 0.7:
-                reasons.append("Low volume - weak conviction")
+                reasons.append(f"High volume confirms move ({volume_ratio:.1f}x avg)")
         
-        # Volatility
-        if not pd.isna(current['volatility']) and current['volatility'] > 0.03:
-            reasons.append("High volatility - increased risk")
+        # RSI analysis (general)
+        if not pd.isna(current['rsi']):
+            if current['rsi'] > 70 and decision == "SELL":
+                reasons.append("Overbought territory (RSI > 70)")
+            elif current['rsi'] < 30 and decision == "BUY":
+                reasons.append("Oversold territory (RSI < 30)")
         
+        # Fallback reason
         if not reasons:
-            reasons.append("NSE technical analysis")
+            if decision == "BUY":
+                reasons.append("Bullish technical signals detected")
+            elif decision == "SELL":
+                reasons.append("Bearish technical signals detected")
+            else:
+                reasons.append("Mixed technical signals - hold position")
         
-        return reasons[:4]
+        return reasons[:3]
     
     def analyze_time_patterns(df, interval, period="I"):
         """Analyze NSE time-based patterns"""
