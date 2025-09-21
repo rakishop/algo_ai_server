@@ -22,14 +22,7 @@ CACHE_DURATION = 300  # 5 minutes
 def create_charting_routes(nse_client: NSEClient):
     router = APIRouter()
     
-    # Import enhanced endpoints
-    try:
-        from enhanced_endpoints import create_enhanced_routes
-        enhanced_router = create_enhanced_routes(nse_client, get_chart_data)
-        # Include enhanced routes
-        router.include_router(enhanced_router)
-    except ImportError:
-        pass  # Enhanced features not available
+    # Enhanced endpoints are included in main.py
     
     @router.post("/api/v1/charting/data")
     def get_chart_data(

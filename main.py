@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from nse_client import NSEClient
 from filtered_endpoints import FilteredEndpoints
 from ai_endpoints import AIEndpoints
@@ -7,8 +8,26 @@ from routes.derivatives_routes import create_derivatives_routes
 from routes.indices_routes import create_indices_routes
 from option_chain_endpoint import create_option_chain_routes
 from charting_endpoint import create_charting_routes
+from websocket_streaming import manager
+from portfolio_manager import PortfolioManager
+from risk_manager import RiskManager
+import asyncio
+from typing import List, Dict
 
-app = FastAPI(title="NSE Market Data API", version="2.0.0", description="AI-Powered NSE market data with ML analysis and smart filtering")
+app = FastAPI(title="NSE Market Data API", version="3.0.0", description="AI-Powered NSE market data with ML analysis, portfolio management, and real-time streaming")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Initialize new managers
+portfolio_manager = PortfolioManager()
+risk_manager = RiskManager()
 nse_client = NSEClient()
 
 # Create shared instances to avoid multiple instantiation
@@ -29,9 +48,28 @@ app.include_router(create_indices_routes(nse_client))
 app.include_router(create_charting_routes(nse_client))
 # Option chain routes integrated into main comprehensive analysis endpoint
 
+# Include enhanced endpoints
+from enhanced_endpoints import router as enhanced_router
+app.include_router(enhanced_router)
+
+# Start background tasks
+@app.on_event("startup")
+async def startup_event():
+    # Start the market data streaming in background
+    asyncio.create_task(manager.start_market_stream())
+
 @app.get("/")
 def welcome():
-    return {"message": "Hi, Welcome to Enterprise API"}
+    return {
+        "message": "Hi, Welcome to Enterprise API v3.0",
+        "new_features": [
+            "Real-time WebSocket streaming",
+            "Advanced portfolio management",
+            "Risk management system",
+            "Enhanced AI analysis"
+        ],
+        "version": "3.0.0"
+    }
 
 @app.get("/test")
 def test_endpoint():
