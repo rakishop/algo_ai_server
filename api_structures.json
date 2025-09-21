@@ -1,0 +1,2388 @@
+{
+  "gainers": {
+    "legends": {
+      "type": "list",
+      "sample_value": null
+    },
+    "legends[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "legends[0][0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "NIFTY": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "NIFTY.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "NIFTY.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "NIFTY.data[0].symbol": {
+      "type": "str",
+      "sample_value": "ADANIENT"
+    },
+    "NIFTY.data[0].series": {
+      "type": "str",
+      "sample_value": "EQ"
+    },
+    "NIFTY.data[0].open_price": {
+      "type": "int",
+      "sample_value": "2495"
+    },
+    "NIFTY.data[0].high_price": {
+      "type": "int",
+      "sample_value": "2579"
+    },
+    "NIFTY.data[0].low_price": {
+      "type": "float",
+      "sample_value": "2466.1"
+    },
+    "NIFTY.data[0].ltp": {
+      "type": "int",
+      "sample_value": "2528"
+    },
+    "NIFTY.data[0].prev_price": {
+      "type": "int",
+      "sample_value": "2402"
+    },
+    "NIFTY.data[0].net_price": {
+      "type": "float",
+      "sample_value": "5.25"
+    },
+    "NIFTY.data[0].trade_quantity": {
+      "type": "int",
+      "sample_value": "7965135"
+    },
+    "NIFTY.data[0].turnover": {
+      "type": "float",
+      "sample_value": "200722.19851349998"
+    },
+    "NIFTY.data[0].market_type": {
+      "type": "str",
+      "sample_value": "N"
+    },
+    "NIFTY.data[0].ca_ex_dt": {
+      "type": "str",
+      "sample_value": "13-Jun-2025"
+    },
+    "NIFTY.data[0].ca_purpose": {
+      "type": "str",
+      "sample_value": "Dividend - Rs 1.30 Per Share"
+    },
+    "NIFTY.data[0].perChange": {
+      "type": "float",
+      "sample_value": "5.25"
+    },
+    "NIFTY.timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    },
+    "BANKNIFTY": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "BANKNIFTY.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "BANKNIFTY.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "BANKNIFTY.data[0].symbol": {
+      "type": "str",
+      "sample_value": "CANBK"
+    },
+    "BANKNIFTY.data[0].series": {
+      "type": "str",
+      "sample_value": "EQ"
+    },
+    "BANKNIFTY.data[0].open_price": {
+      "type": "float",
+      "sample_value": "115.7"
+    },
+    "BANKNIFTY.data[0].high_price": {
+      "type": "float",
+      "sample_value": "118.4"
+    },
+    "BANKNIFTY.data[0].low_price": {
+      "type": "float",
+      "sample_value": "115.55"
+    },
+    "BANKNIFTY.data[0].ltp": {
+      "type": "float",
+      "sample_value": "117.79"
+    },
+    "BANKNIFTY.data[0].prev_price": {
+      "type": "float",
+      "sample_value": "115.41"
+    },
+    "BANKNIFTY.data[0].net_price": {
+      "type": "float",
+      "sample_value": "2.06"
+    },
+    "BANKNIFTY.data[0].trade_quantity": {
+      "type": "int",
+      "sample_value": "46393129"
+    },
+    "BANKNIFTY.data[0].turnover": {
+      "type": "float",
+      "sample_value": "54549.041078199996"
+    },
+    "BANKNIFTY.data[0].market_type": {
+      "type": "str",
+      "sample_value": "N"
+    },
+    "BANKNIFTY.data[0].ca_ex_dt": {
+      "type": "str",
+      "sample_value": "13-Jun-2025"
+    },
+    "BANKNIFTY.data[0].ca_purpose": {
+      "type": "str",
+      "sample_value": "Dividend - Rs 4 Per Share"
+    },
+    "BANKNIFTY.data[0].perChange": {
+      "type": "float",
+      "sample_value": "2.06"
+    },
+    "BANKNIFTY.timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    },
+    "NIFTYNEXT50": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "NIFTYNEXT50.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "NIFTYNEXT50.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "NIFTYNEXT50.data[0].symbol": {
+      "type": "str",
+      "sample_value": "ADANIPOWER"
+    },
+    "NIFTYNEXT50.data[0].series": {
+      "type": "str",
+      "sample_value": "EQ"
+    },
+    "NIFTYNEXT50.data[0].open_price": {
+      "type": "int",
+      "sample_value": "676"
+    },
+    "NIFTYNEXT50.data[0].high_price": {
+      "type": "int",
+      "sample_value": "723"
+    },
+    "NIFTYNEXT50.data[0].low_price": {
+      "type": "float",
+      "sample_value": "665.35"
+    },
+    "NIFTYNEXT50.data[0].ltp": {
+      "type": "float",
+      "sample_value": "716.1"
+    },
+    "NIFTYNEXT50.data[0].prev_price": {
+      "type": "float",
+      "sample_value": "631.35"
+    },
+    "NIFTYNEXT50.data[0].net_price": {
+      "type": "float",
+      "sample_value": "13.42"
+    },
+    "NIFTYNEXT50.data[0].trade_quantity": {
+      "type": "int",
+      "sample_value": "86324006"
+    },
+    "NIFTYNEXT50.data[0].turnover": {
+      "type": "float",
+      "sample_value": "603059.505916"
+    },
+    "NIFTYNEXT50.data[0].market_type": {
+      "type": "str",
+      "sample_value": "N"
+    },
+    "NIFTYNEXT50.data[0].ca_ex_dt": {
+      "type": "str",
+      "sample_value": "22-Sep-2025"
+    },
+    "NIFTYNEXT50.data[0].ca_purpose": {
+      "type": "str",
+      "sample_value": "Face Value Split (Sub-Division) - From Rs 10/- Per Share To Rs 2/- Per Share"
+    },
+    "NIFTYNEXT50.data[0].perChange": {
+      "type": "float",
+      "sample_value": "13.42"
+    },
+    "NIFTYNEXT50.timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    },
+    "SecGtr20": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "SecGtr20.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "SecGtr20.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "SecGtr20.data[0].symbol": {
+      "type": "str",
+      "sample_value": "INTENTECH"
+    },
+    "SecGtr20.data[0].series": {
+      "type": "str",
+      "sample_value": "EQ"
+    },
+    "SecGtr20.data[0].open_price": {
+      "type": "int",
+      "sample_value": "115"
+    },
+    "SecGtr20.data[0].high_price": {
+      "type": "float",
+      "sample_value": "126.9"
+    },
+    "SecGtr20.data[0].low_price": {
+      "type": "int",
+      "sample_value": "114"
+    },
+    "SecGtr20.data[0].ltp": {
+      "type": "float",
+      "sample_value": "126.9"
+    },
+    "SecGtr20.data[0].prev_price": {
+      "type": "float",
+      "sample_value": "105.75"
+    },
+    "SecGtr20.data[0].net_price": {
+      "type": "int",
+      "sample_value": "20"
+    },
+    "SecGtr20.data[0].trade_quantity": {
+      "type": "int",
+      "sample_value": "4402930"
+    },
+    "SecGtr20.data[0].turnover": {
+      "type": "float",
+      "sample_value": "5413.402435"
+    },
+    "SecGtr20.data[0].market_type": {
+      "type": "str",
+      "sample_value": "N"
+    },
+    "SecGtr20.data[0].ca_ex_dt": {
+      "type": "str",
+      "sample_value": "23-Sep-2024"
+    },
+    "SecGtr20.data[0].ca_purpose": {
+      "type": "str",
+      "sample_value": "Annual General Meeting/Dividend - Re 1 Per Share"
+    },
+    "SecGtr20.data[0].perChange": {
+      "type": "int",
+      "sample_value": "20"
+    },
+    "SecGtr20.timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    },
+    "SecLwr20": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "SecLwr20.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "SecLwr20.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "SecLwr20.data[0].symbol": {
+      "type": "str",
+      "sample_value": "GATECH"
+    },
+    "SecLwr20.data[0].series": {
+      "type": "str",
+      "sample_value": "EQ"
+    },
+    "SecLwr20.data[0].open_price": {
+      "type": "float",
+      "sample_value": "0.7"
+    },
+    "SecLwr20.data[0].high_price": {
+      "type": "float",
+      "sample_value": "0.74"
+    },
+    "SecLwr20.data[0].low_price": {
+      "type": "float",
+      "sample_value": "0.67"
+    },
+    "SecLwr20.data[0].ltp": {
+      "type": "float",
+      "sample_value": "0.74"
+    },
+    "SecLwr20.data[0].prev_price": {
+      "type": "float",
+      "sample_value": "0.68"
+    },
+    "SecLwr20.data[0].net_price": {
+      "type": "float",
+      "sample_value": "8.82"
+    },
+    "SecLwr20.data[0].trade_quantity": {
+      "type": "int",
+      "sample_value": "39801186"
+    },
+    "SecLwr20.data[0].turnover": {
+      "type": "float",
+      "sample_value": "282.5884206"
+    },
+    "SecLwr20.data[0].market_type": {
+      "type": "str",
+      "sample_value": "N"
+    },
+    "SecLwr20.data[0].ca_ex_dt": {
+      "type": "str",
+      "sample_value": "28-Apr-2025"
+    },
+    "SecLwr20.data[0].ca_purpose": {
+      "type": "str",
+      "sample_value": "Rights 51:82 @ Premium Rs 0/-"
+    },
+    "SecLwr20.data[0].perChange": {
+      "type": "float",
+      "sample_value": "8.82"
+    },
+    "SecLwr20.timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    },
+    "FOSec": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "FOSec.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "FOSec.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "FOSec.data[0].symbol": {
+      "type": "str",
+      "sample_value": "IDEA"
+    },
+    "FOSec.data[0].series": {
+      "type": "str",
+      "sample_value": "EQ"
+    },
+    "FOSec.data[0].open_price": {
+      "type": "float",
+      "sample_value": "7.91"
+    },
+    "FOSec.data[0].high_price": {
+      "type": "float",
+      "sample_value": "8.82"
+    },
+    "FOSec.data[0].low_price": {
+      "type": "float",
+      "sample_value": "7.81"
+    },
+    "FOSec.data[0].ltp": {
+      "type": "float",
+      "sample_value": "8.46"
+    },
+    "FOSec.data[0].prev_price": {
+      "type": "float",
+      "sample_value": "7.84"
+    },
+    "FOSec.data[0].net_price": {
+      "type": "float",
+      "sample_value": "7.91"
+    },
+    "FOSec.data[0].trade_quantity": {
+      "type": "int",
+      "sample_value": "2689120745"
+    },
+    "FOSec.data[0].turnover": {
+      "type": "float",
+      "sample_value": "225886.14258"
+    },
+    "FOSec.data[0].market_type": {
+      "type": "str",
+      "sample_value": "N"
+    },
+    "FOSec.data[0].ca_ex_dt": {
+      "type": "str",
+      "sample_value": "20-Aug-2024"
+    },
+    "FOSec.data[0].ca_purpose": {
+      "type": "str",
+      "sample_value": "Annual General Meeting"
+    },
+    "FOSec.data[0].perChange": {
+      "type": "float",
+      "sample_value": "7.91"
+    },
+    "FOSec.timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    },
+    "allSec": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "allSec.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "allSec.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "allSec.data[0].symbol": {
+      "type": "str",
+      "sample_value": "INTENTECH"
+    },
+    "allSec.data[0].series": {
+      "type": "str",
+      "sample_value": "EQ"
+    },
+    "allSec.data[0].open_price": {
+      "type": "int",
+      "sample_value": "115"
+    },
+    "allSec.data[0].high_price": {
+      "type": "float",
+      "sample_value": "126.9"
+    },
+    "allSec.data[0].low_price": {
+      "type": "int",
+      "sample_value": "114"
+    },
+    "allSec.data[0].ltp": {
+      "type": "float",
+      "sample_value": "126.9"
+    },
+    "allSec.data[0].prev_price": {
+      "type": "float",
+      "sample_value": "105.75"
+    },
+    "allSec.data[0].net_price": {
+      "type": "int",
+      "sample_value": "20"
+    },
+    "allSec.data[0].trade_quantity": {
+      "type": "int",
+      "sample_value": "4402930"
+    },
+    "allSec.data[0].turnover": {
+      "type": "float",
+      "sample_value": "5413.402435"
+    },
+    "allSec.data[0].market_type": {
+      "type": "str",
+      "sample_value": "N"
+    },
+    "allSec.data[0].ca_ex_dt": {
+      "type": "str",
+      "sample_value": "23-Sep-2024"
+    },
+    "allSec.data[0].ca_purpose": {
+      "type": "str",
+      "sample_value": "Annual General Meeting/Dividend - Re 1 Per Share"
+    },
+    "allSec.data[0].perChange": {
+      "type": "int",
+      "sample_value": "20"
+    },
+    "allSec.timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    }
+  },
+  "losers": {
+    "legends": {
+      "type": "list",
+      "sample_value": null
+    },
+    "legends[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "legends[0][0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "NIFTY": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "NIFTY.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "NIFTY.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "NIFTY.data[0].symbol": {
+      "type": "str",
+      "sample_value": "HCLTECH"
+    },
+    "NIFTY.data[0].series": {
+      "type": "str",
+      "sample_value": "EQ"
+    },
+    "NIFTY.data[0].open_price": {
+      "type": "float",
+      "sample_value": "1493.8"
+    },
+    "NIFTY.data[0].high_price": {
+      "type": "float",
+      "sample_value": "1493.8"
+    },
+    "NIFTY.data[0].low_price": {
+      "type": "int",
+      "sample_value": "1464"
+    },
+    "NIFTY.data[0].ltp": {
+      "type": "int",
+      "sample_value": "1470"
+    },
+    "NIFTY.data[0].prev_price": {
+      "type": "float",
+      "sample_value": "1493.8"
+    },
+    "NIFTY.data[0].net_price": {
+      "type": "float",
+      "sample_value": "-1.59"
+    },
+    "NIFTY.data[0].trade_quantity": {
+      "type": "int",
+      "sample_value": "3197957"
+    },
+    "NIFTY.data[0].turnover": {
+      "type": "float",
+      "sample_value": "47037.470330200005"
+    },
+    "NIFTY.data[0].market_type": {
+      "type": "str",
+      "sample_value": "N"
+    },
+    "NIFTY.data[0].ca_ex_dt": {
+      "type": "str",
+      "sample_value": "18-Jul-2025"
+    },
+    "NIFTY.data[0].ca_purpose": {
+      "type": "str",
+      "sample_value": "Interim Dividend - Rs 12 Per Share"
+    },
+    "NIFTY.data[0].perChange": {
+      "type": "float",
+      "sample_value": "-1.59"
+    },
+    "NIFTY.timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    },
+    "BANKNIFTY": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "BANKNIFTY.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "BANKNIFTY.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "BANKNIFTY.data[0].symbol": {
+      "type": "str",
+      "sample_value": "FEDERALBNK"
+    },
+    "BANKNIFTY.data[0].series": {
+      "type": "str",
+      "sample_value": "EQ"
+    },
+    "BANKNIFTY.data[0].open_price": {
+      "type": "float",
+      "sample_value": "198.43"
+    },
+    "BANKNIFTY.data[0].high_price": {
+      "type": "float",
+      "sample_value": "199.5"
+    },
+    "BANKNIFTY.data[0].low_price": {
+      "type": "float",
+      "sample_value": "197.62"
+    },
+    "BANKNIFTY.data[0].ltp": {
+      "type": "float",
+      "sample_value": "197.99"
+    },
+    "BANKNIFTY.data[0].prev_price": {
+      "type": "float",
+      "sample_value": "198.43"
+    },
+    "BANKNIFTY.data[0].net_price": {
+      "type": "float",
+      "sample_value": "-0.22"
+    },
+    "BANKNIFTY.data[0].trade_quantity": {
+      "type": "int",
+      "sample_value": "2693450"
+    },
+    "BANKNIFTY.data[0].turnover": {
+      "type": "float",
+      "sample_value": "5343.8048"
+    },
+    "BANKNIFTY.data[0].market_type": {
+      "type": "str",
+      "sample_value": "N"
+    },
+    "BANKNIFTY.data[0].ca_ex_dt": {
+      "type": "str",
+      "sample_value": "22-Aug-2025"
+    },
+    "BANKNIFTY.data[0].ca_purpose": {
+      "type": "str",
+      "sample_value": "Dividend - Rs 1.20 Per Share"
+    },
+    "BANKNIFTY.data[0].perChange": {
+      "type": "float",
+      "sample_value": "-0.22"
+    },
+    "BANKNIFTY.timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    },
+    "NIFTYNEXT50": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "NIFTYNEXT50.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "NIFTYNEXT50.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "NIFTYNEXT50.data[0].symbol": {
+      "type": "str",
+      "sample_value": "BAJAJHLDNG"
+    },
+    "NIFTYNEXT50.data[0].series": {
+      "type": "str",
+      "sample_value": "EQ"
+    },
+    "NIFTYNEXT50.data[0].open_price": {
+      "type": "int",
+      "sample_value": "13469"
+    },
+    "NIFTYNEXT50.data[0].high_price": {
+      "type": "int",
+      "sample_value": "13520"
+    },
+    "NIFTYNEXT50.data[0].low_price": {
+      "type": "int",
+      "sample_value": "13152"
+    },
+    "NIFTYNEXT50.data[0].ltp": {
+      "type": "int",
+      "sample_value": "13280"
+    },
+    "NIFTYNEXT50.data[0].prev_price": {
+      "type": "int",
+      "sample_value": "13467"
+    },
+    "NIFTYNEXT50.data[0].net_price": {
+      "type": "float",
+      "sample_value": "-1.39"
+    },
+    "NIFTYNEXT50.data[0].trade_quantity": {
+      "type": "int",
+      "sample_value": "95999"
+    },
+    "NIFTYNEXT50.data[0].turnover": {
+      "type": "float",
+      "sample_value": "12715.845141900001"
+    },
+    "NIFTYNEXT50.data[0].market_type": {
+      "type": "str",
+      "sample_value": "N"
+    },
+    "NIFTYNEXT50.data[0].ca_ex_dt": {
+      "type": "str",
+      "sample_value": "22-Sep-2025"
+    },
+    "NIFTYNEXT50.data[0].ca_purpose": {
+      "type": "str",
+      "sample_value": "Interim Dividend - Rs 65 Per Share"
+    },
+    "NIFTYNEXT50.data[0].perChange": {
+      "type": "float",
+      "sample_value": "-1.39"
+    },
+    "NIFTYNEXT50.timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    },
+    "SecGtr20": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "SecGtr20.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "SecGtr20.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "SecGtr20.data[0].symbol": {
+      "type": "str",
+      "sample_value": "TICL"
+    },
+    "SecGtr20.data[0].series": {
+      "type": "str",
+      "sample_value": "EQ"
+    },
+    "SecGtr20.data[0].open_price": {
+      "type": "float",
+      "sample_value": "24.6"
+    },
+    "SecGtr20.data[0].high_price": {
+      "type": "float",
+      "sample_value": "24.6"
+    },
+    "SecGtr20.data[0].low_price": {
+      "type": "float",
+      "sample_value": "22.15"
+    },
+    "SecGtr20.data[0].ltp": {
+      "type": "float",
+      "sample_value": "22.25"
+    },
+    "SecGtr20.data[0].prev_price": {
+      "type": "float",
+      "sample_value": "24.31"
+    },
+    "SecGtr20.data[0].net_price": {
+      "type": "float",
+      "sample_value": "-8.47"
+    },
+    "SecGtr20.data[0].trade_quantity": {
+      "type": "int",
+      "sample_value": "1186772"
+    },
+    "SecGtr20.data[0].turnover": {
+      "type": "float",
+      "sample_value": "277.111262"
+    },
+    "SecGtr20.data[0].market_type": {
+      "type": "str",
+      "sample_value": "N"
+    },
+    "SecGtr20.data[0].ca_ex_dt": {
+      "type": "str",
+      "sample_value": "-"
+    },
+    "SecGtr20.data[0].ca_purpose": {
+      "type": "str",
+      "sample_value": "-"
+    },
+    "SecGtr20.data[0].perChange": {
+      "type": "float",
+      "sample_value": "-8.47"
+    },
+    "SecGtr20.timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    },
+    "SecLwr20": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "SecLwr20.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "SecLwr20.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "SecLwr20.data[0].symbol": {
+      "type": "str",
+      "sample_value": "SARVESHWAR"
+    },
+    "SecLwr20.data[0].series": {
+      "type": "str",
+      "sample_value": "EQ"
+    },
+    "SecLwr20.data[0].open_price": {
+      "type": "float",
+      "sample_value": "6.25"
+    },
+    "SecLwr20.data[0].high_price": {
+      "type": "float",
+      "sample_value": "6.64"
+    },
+    "SecLwr20.data[0].low_price": {
+      "type": "float",
+      "sample_value": "6.1"
+    },
+    "SecLwr20.data[0].ltp": {
+      "type": "float",
+      "sample_value": "6.6"
+    },
+    "SecLwr20.data[0].prev_price": {
+      "type": "float",
+      "sample_value": "7.17"
+    },
+    "SecLwr20.data[0].net_price": {
+      "type": "float",
+      "sample_value": "-7.95"
+    },
+    "SecLwr20.data[0].trade_quantity": {
+      "type": "int",
+      "sample_value": "44582176"
+    },
+    "SecLwr20.data[0].turnover": {
+      "type": "float",
+      "sample_value": "2884.4667872000005"
+    },
+    "SecLwr20.data[0].market_type": {
+      "type": "str",
+      "sample_value": "N"
+    },
+    "SecLwr20.data[0].ca_ex_dt": {
+      "type": "str",
+      "sample_value": "22-Aug-2025"
+    },
+    "SecLwr20.data[0].ca_purpose": {
+      "type": "str",
+      "sample_value": "Rights 12:47 @ Premium Rs 5/-"
+    },
+    "SecLwr20.data[0].perChange": {
+      "type": "float",
+      "sample_value": "-7.95"
+    },
+    "SecLwr20.timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    },
+    "FOSec": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "FOSec.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "FOSec.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "FOSec.data[0].symbol": {
+      "type": "str",
+      "sample_value": "PAYTM"
+    },
+    "FOSec.data[0].series": {
+      "type": "str",
+      "sample_value": "EQ"
+    },
+    "FOSec.data[0].open_price": {
+      "type": "int",
+      "sample_value": "1225"
+    },
+    "FOSec.data[0].high_price": {
+      "type": "float",
+      "sample_value": "1234.7"
+    },
+    "FOSec.data[0].low_price": {
+      "type": "float",
+      "sample_value": "1163.9"
+    },
+    "FOSec.data[0].ltp": {
+      "type": "int",
+      "sample_value": "1173"
+    },
+    "FOSec.data[0].prev_price": {
+      "type": "float",
+      "sample_value": "1229.3"
+    },
+    "FOSec.data[0].net_price": {
+      "type": "float",
+      "sample_value": "-4.58"
+    },
+    "FOSec.data[0].trade_quantity": {
+      "type": "int",
+      "sample_value": "4853122"
+    },
+    "FOSec.data[0].turnover": {
+      "type": "float",
+      "sample_value": "57822.522069"
+    },
+    "FOSec.data[0].market_type": {
+      "type": "str",
+      "sample_value": "N"
+    },
+    "FOSec.data[0].ca_ex_dt": {
+      "type": "str",
+      "sample_value": "-"
+    },
+    "FOSec.data[0].ca_purpose": {
+      "type": "str",
+      "sample_value": "-"
+    },
+    "FOSec.data[0].perChange": {
+      "type": "float",
+      "sample_value": "-4.58"
+    },
+    "FOSec.timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    },
+    "allSec": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "allSec.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "allSec.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "allSec.data[0].symbol": {
+      "type": "str",
+      "sample_value": "TICL"
+    },
+    "allSec.data[0].series": {
+      "type": "str",
+      "sample_value": "EQ"
+    },
+    "allSec.data[0].open_price": {
+      "type": "float",
+      "sample_value": "24.6"
+    },
+    "allSec.data[0].high_price": {
+      "type": "float",
+      "sample_value": "24.6"
+    },
+    "allSec.data[0].low_price": {
+      "type": "float",
+      "sample_value": "22.15"
+    },
+    "allSec.data[0].ltp": {
+      "type": "float",
+      "sample_value": "22.25"
+    },
+    "allSec.data[0].prev_price": {
+      "type": "float",
+      "sample_value": "24.31"
+    },
+    "allSec.data[0].net_price": {
+      "type": "float",
+      "sample_value": "-8.47"
+    },
+    "allSec.data[0].trade_quantity": {
+      "type": "int",
+      "sample_value": "1186772"
+    },
+    "allSec.data[0].turnover": {
+      "type": "float",
+      "sample_value": "277.111262"
+    },
+    "allSec.data[0].market_type": {
+      "type": "str",
+      "sample_value": "N"
+    },
+    "allSec.data[0].ca_ex_dt": {
+      "type": "str",
+      "sample_value": "-"
+    },
+    "allSec.data[0].ca_purpose": {
+      "type": "str",
+      "sample_value": "-"
+    },
+    "allSec.data[0].perChange": {
+      "type": "float",
+      "sample_value": "-8.47"
+    },
+    "allSec.timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    }
+  },
+  "52week_high": {
+    "high": {
+      "type": "int",
+      "sample_value": "67"
+    },
+    "data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "data[0].symbol": {
+      "type": "str",
+      "sample_value": "AARADHYA"
+    },
+    "data[0].series": {
+      "type": "str",
+      "sample_value": "SM"
+    },
+    "data[0].comapnyName": {
+      "type": "str",
+      "sample_value": "Aaradhya Disposal Industries Limited"
+    },
+    "data[0].new52WHL": {
+      "type": "float",
+      "sample_value": "127.9"
+    },
+    "data[0].prev52WHL": {
+      "type": "float",
+      "sample_value": "124.9"
+    },
+    "data[0].prevHLDate": {
+      "type": "str",
+      "sample_value": "18-Sep-2025"
+    },
+    "data[0].ltp": {
+      "type": "float",
+      "sample_value": "122.5"
+    },
+    "data[0].prevClose": {
+      "type": "str",
+      "sample_value": "124.65"
+    },
+    "data[0].change": {
+      "type": "float",
+      "sample_value": "-2.15"
+    },
+    "data[0].pChange": {
+      "type": "float",
+      "sample_value": "-1.7248295226634576"
+    },
+    "timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    }
+  },
+  "52week_low": {
+    "data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "data[0].symbol": {
+      "type": "str",
+      "sample_value": "ATCENERGY"
+    },
+    "data[0].series": {
+      "type": "str",
+      "sample_value": "SM"
+    },
+    "data[0].comapnyName": {
+      "type": "str",
+      "sample_value": "ATC Energies System Limited"
+    },
+    "data[0].new52WHL": {
+      "type": "int",
+      "sample_value": "58"
+    },
+    "data[0].prev52WHL": {
+      "type": "float",
+      "sample_value": "60.85"
+    },
+    "data[0].prevHLDate": {
+      "type": "str",
+      "sample_value": "01-Sep-2025"
+    },
+    "data[0].ltp": {
+      "type": "float",
+      "sample_value": "58.45"
+    },
+    "data[0].prevClose": {
+      "type": "str",
+      "sample_value": "62.8"
+    },
+    "data[0].change": {
+      "type": "float",
+      "sample_value": "-4.35"
+    },
+    "data[0].pChange": {
+      "type": "float",
+      "sample_value": "-6.926751592356688"
+    },
+    "low": {
+      "type": "int",
+      "sample_value": "31"
+    },
+    "timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    }
+  },
+  "volume_gainers": {
+    "data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "data[0].symbol": {
+      "type": "str",
+      "sample_value": "BHARATGEAR"
+    },
+    "data[0].companyName": {
+      "type": "str",
+      "sample_value": "Bharat Gears Limited"
+    },
+    "data[0].volume": {
+      "type": "int",
+      "sample_value": "2699382"
+    },
+    "data[0].week1AvgVolume": {
+      "type": "int",
+      "sample_value": "558729"
+    },
+    "data[0].week1volChange": {
+      "type": "float",
+      "sample_value": "4.831285115376025"
+    },
+    "data[0].week2AvgVolume": {
+      "type": "int",
+      "sample_value": "310959"
+    },
+    "data[0].week2volChange": {
+      "type": "float",
+      "sample_value": "8.680806972476828"
+    },
+    "data[0].ltp": {
+      "type": "float",
+      "sample_value": "106.98"
+    },
+    "data[0].pChange": {
+      "type": "float",
+      "sample_value": "11.85"
+    },
+    "data[0].turnover": {
+      "type": "float",
+      "sample_value": "2974.9889"
+    },
+    "timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    }
+  },
+  "most_active": {
+    "data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "data[0].symbol": {
+      "type": "str",
+      "sample_value": "ADANIPOWER"
+    },
+    "data[0].identifier": {
+      "type": "str",
+      "sample_value": "ADANIPOWEREQN"
+    },
+    "data[0].lastPrice": {
+      "type": "float",
+      "sample_value": "716.1"
+    },
+    "data[0].pChange": {
+      "type": "float",
+      "sample_value": "13.42"
+    },
+    "data[0].quantityTraded": {
+      "type": "int",
+      "sample_value": "86324006"
+    },
+    "data[0].totalTradedVolume": {
+      "type": "int",
+      "sample_value": "86324006"
+    },
+    "data[0].totalTradedValue": {
+      "type": "float",
+      "sample_value": "60305950591.6"
+    },
+    "data[0].previousClose": {
+      "type": "float",
+      "sample_value": "631.35"
+    },
+    "data[0].exDate": {
+      "type": "str",
+      "sample_value": "2025-09-22 00:00:00"
+    },
+    "data[0].purpose": {
+      "type": "NoneType",
+      "sample_value": "None"
+    },
+    "data[0].yearHigh": {
+      "type": "int",
+      "sample_value": "723"
+    },
+    "data[0].yearLow": {
+      "type": "int",
+      "sample_value": "432"
+    },
+    "data[0].change": {
+      "type": "float",
+      "sample_value": "84.75"
+    },
+    "data[0].open": {
+      "type": "int",
+      "sample_value": "676"
+    },
+    "data[0].closePrice": {
+      "type": "float",
+      "sample_value": "709.4"
+    },
+    "data[0].dayHigh": {
+      "type": "int",
+      "sample_value": "723"
+    },
+    "data[0].dayLow": {
+      "type": "float",
+      "sample_value": "665.35"
+    },
+    "data[0].lastUpdateTime": {
+      "type": "str",
+      "sample_value": "2025-09-19 16:00:25"
+    },
+    "timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    }
+  },
+  "price_band": {
+    "upper": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "upper.AllSec": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "upper.AllSec.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "upper.AllSec.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "upper.AllSec.data[0].symbol": {
+      "type": "str",
+      "sample_value": "ORCHPHARMA"
+    },
+    "upper.AllSec.data[0].series": {
+      "type": "str",
+      "sample_value": "EQ"
+    },
+    "upper.AllSec.data[0].ltp": {
+      "type": "str",
+      "sample_value": "788.45"
+    },
+    "upper.AllSec.data[0].change": {
+      "type": "str",
+      "sample_value": "71.65"
+    },
+    "upper.AllSec.data[0].pChange": {
+      "type": "str",
+      "sample_value": "  10.00"
+    },
+    "upper.AllSec.data[0].priceBand": {
+      "type": "str",
+      "sample_value": "10"
+    },
+    "upper.AllSec.data[0].highPrice": {
+      "type": "float",
+      "sample_value": "788.45"
+    },
+    "upper.AllSec.data[0].lowPrice": {
+      "type": "float",
+      "sample_value": "718.1"
+    },
+    "upper.AllSec.data[0].yearHigh": {
+      "type": "float",
+      "sample_value": "1997.4"
+    },
+    "upper.AllSec.data[0].yearLow": {
+      "type": "float",
+      "sample_value": "603.8"
+    },
+    "upper.AllSec.data[0].totalTradedVol": {
+      "type": "float",
+      "sample_value": "11.99808"
+    },
+    "upper.AllSec.data[0].turnover": {
+      "type": "float",
+      "sample_value": "93.244278528"
+    },
+    "upper.AllSec.timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    },
+    "upper.AllSec.indetifier": {
+      "type": "str",
+      "sample_value": "upperAllSec"
+    },
+    "upper.AllSec.count": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "upper.AllSec.count.TOTAL": {
+      "type": "str",
+      "sample_value": "160"
+    },
+    "upper.AllSec.count.UPPER": {
+      "type": "str",
+      "sample_value": "101"
+    },
+    "upper.AllSec.count.LOWER": {
+      "type": "str",
+      "sample_value": "47"
+    },
+    "upper.AllSec.count.BOTH": {
+      "type": "str",
+      "sample_value": "12"
+    },
+    "upper.SecGtr20": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "upper.SecGtr20.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "upper.SecGtr20.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "upper.SecGtr20.data[0].symbol": {
+      "type": "str",
+      "sample_value": "ORCHPHARMA"
+    },
+    "upper.SecGtr20.data[0].series": {
+      "type": "str",
+      "sample_value": "EQ"
+    },
+    "upper.SecGtr20.data[0].ltp": {
+      "type": "str",
+      "sample_value": "788.45"
+    },
+    "upper.SecGtr20.data[0].change": {
+      "type": "str",
+      "sample_value": "71.65"
+    },
+    "upper.SecGtr20.data[0].pChange": {
+      "type": "str",
+      "sample_value": "  10.00"
+    },
+    "upper.SecGtr20.data[0].priceBand": {
+      "type": "str",
+      "sample_value": "10"
+    },
+    "upper.SecGtr20.data[0].highPrice": {
+      "type": "float",
+      "sample_value": "788.45"
+    },
+    "upper.SecGtr20.data[0].lowPrice": {
+      "type": "float",
+      "sample_value": "718.1"
+    },
+    "upper.SecGtr20.data[0].yearHigh": {
+      "type": "float",
+      "sample_value": "1997.4"
+    },
+    "upper.SecGtr20.data[0].yearLow": {
+      "type": "float",
+      "sample_value": "603.8"
+    },
+    "upper.SecGtr20.data[0].totalTradedVol": {
+      "type": "float",
+      "sample_value": "11.99808"
+    },
+    "upper.SecGtr20.data[0].turnover": {
+      "type": "float",
+      "sample_value": "93.244278528"
+    },
+    "upper.SecGtr20.timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    },
+    "upper.SecGtr20.indetifier": {
+      "type": "str",
+      "sample_value": "upperSecGtr20"
+    },
+    "upper.SecGtr20.count": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "upper.SecGtr20.count.TOTAL": {
+      "type": "str",
+      "sample_value": "160"
+    },
+    "upper.SecGtr20.count.UPPER": {
+      "type": "str",
+      "sample_value": "101"
+    },
+    "upper.SecGtr20.count.LOWER": {
+      "type": "str",
+      "sample_value": "47"
+    },
+    "upper.SecGtr20.count.BOTH": {
+      "type": "str",
+      "sample_value": "12"
+    },
+    "upper.SecLwr20": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "upper.SecLwr20.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "upper.SecLwr20.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "upper.SecLwr20.data[0].symbol": {
+      "type": "str",
+      "sample_value": "UNITECH"
+    },
+    "upper.SecLwr20.data[0].series": {
+      "type": "str",
+      "sample_value": "BZ"
+    },
+    "upper.SecLwr20.data[0].ltp": {
+      "type": "str",
+      "sample_value": "7.66"
+    },
+    "upper.SecLwr20.data[0].change": {
+      "type": "str",
+      "sample_value": "0.36"
+    },
+    "upper.SecLwr20.data[0].pChange": {
+      "type": "str",
+      "sample_value": "   4.93"
+    },
+    "upper.SecLwr20.data[0].priceBand": {
+      "type": "str",
+      "sample_value": "5"
+    },
+    "upper.SecLwr20.data[0].highPrice": {
+      "type": "float",
+      "sample_value": "7.66"
+    },
+    "upper.SecLwr20.data[0].lowPrice": {
+      "type": "float",
+      "sample_value": "7.02"
+    },
+    "upper.SecLwr20.data[0].yearHigh": {
+      "type": "float",
+      "sample_value": "13.2"
+    },
+    "upper.SecLwr20.data[0].yearLow": {
+      "type": "float",
+      "sample_value": "5.5"
+    },
+    "upper.SecLwr20.data[0].totalTradedVol": {
+      "type": "float",
+      "sample_value": "86.80757"
+    },
+    "upper.SecLwr20.data[0].turnover": {
+      "type": "float",
+      "sample_value": "6.588694563000001"
+    },
+    "upper.SecLwr20.timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    },
+    "upper.SecLwr20.indetifier": {
+      "type": "str",
+      "sample_value": "upperSecLwr20"
+    },
+    "upper.SecLwr20.count": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "upper.SecLwr20.count.TOTAL": {
+      "type": "str",
+      "sample_value": "160"
+    },
+    "upper.SecLwr20.count.UPPER": {
+      "type": "str",
+      "sample_value": "101"
+    },
+    "upper.SecLwr20.count.LOWER": {
+      "type": "str",
+      "sample_value": "47"
+    },
+    "upper.SecLwr20.count.BOTH": {
+      "type": "str",
+      "sample_value": "12"
+    },
+    "count": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "count.TOTAL": {
+      "type": "str",
+      "sample_value": "160"
+    },
+    "count.UPPER": {
+      "type": "str",
+      "sample_value": "101"
+    },
+    "count.LOWER": {
+      "type": "str",
+      "sample_value": "47"
+    },
+    "count.BOTH": {
+      "type": "str",
+      "sample_value": "12"
+    },
+    "lower": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "lower.AllSec": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "lower.AllSec.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "lower.AllSec.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "lower.AllSec.data[0].symbol": {
+      "type": "str",
+      "sample_value": "RELINFRA"
+    },
+    "lower.AllSec.data[0].series": {
+      "type": "str",
+      "sample_value": "BE"
+    },
+    "lower.AllSec.data[0].ltp": {
+      "type": "str",
+      "sample_value": "260"
+    },
+    "lower.AllSec.data[0].change": {
+      "type": "str",
+      "sample_value": "-7.35"
+    },
+    "lower.AllSec.data[0].pChange": {
+      "type": "str",
+      "sample_value": "  -2.75"
+    },
+    "lower.AllSec.data[0].priceBand": {
+      "type": "str",
+      "sample_value": "5"
+    },
+    "lower.AllSec.data[0].highPrice": {
+      "type": "float",
+      "sample_value": "265.7"
+    },
+    "lower.AllSec.data[0].lowPrice": {
+      "type": "int",
+      "sample_value": "254"
+    },
+    "lower.AllSec.data[0].yearHigh": {
+      "type": "float",
+      "sample_value": "423.4"
+    },
+    "lower.AllSec.data[0].yearLow": {
+      "type": "float",
+      "sample_value": "198.13"
+    },
+    "lower.AllSec.data[0].totalTradedVol": {
+      "type": "float",
+      "sample_value": "17.62288"
+    },
+    "lower.AllSec.data[0].turnover": {
+      "type": "float",
+      "sample_value": "45.752521056"
+    },
+    "lower.AllSec.timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    },
+    "lower.AllSec.indetifier": {
+      "type": "str",
+      "sample_value": "lowerAllSec"
+    },
+    "lower.AllSec.count": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "lower.AllSec.count.TOTAL": {
+      "type": "str",
+      "sample_value": "160"
+    },
+    "lower.AllSec.count.UPPER": {
+      "type": "str",
+      "sample_value": "101"
+    },
+    "lower.AllSec.count.LOWER": {
+      "type": "str",
+      "sample_value": "47"
+    },
+    "lower.AllSec.count.BOTH": {
+      "type": "str",
+      "sample_value": "12"
+    },
+    "lower.SecGtr20": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "lower.SecGtr20.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "lower.SecGtr20.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "lower.SecGtr20.data[0].symbol": {
+      "type": "str",
+      "sample_value": "RELINFRA"
+    },
+    "lower.SecGtr20.data[0].series": {
+      "type": "str",
+      "sample_value": "BE"
+    },
+    "lower.SecGtr20.data[0].ltp": {
+      "type": "str",
+      "sample_value": "260"
+    },
+    "lower.SecGtr20.data[0].change": {
+      "type": "str",
+      "sample_value": "-7.35"
+    },
+    "lower.SecGtr20.data[0].pChange": {
+      "type": "str",
+      "sample_value": "  -2.75"
+    },
+    "lower.SecGtr20.data[0].priceBand": {
+      "type": "str",
+      "sample_value": "5"
+    },
+    "lower.SecGtr20.data[0].highPrice": {
+      "type": "float",
+      "sample_value": "265.7"
+    },
+    "lower.SecGtr20.data[0].lowPrice": {
+      "type": "int",
+      "sample_value": "254"
+    },
+    "lower.SecGtr20.data[0].yearHigh": {
+      "type": "float",
+      "sample_value": "423.4"
+    },
+    "lower.SecGtr20.data[0].yearLow": {
+      "type": "float",
+      "sample_value": "198.13"
+    },
+    "lower.SecGtr20.data[0].totalTradedVol": {
+      "type": "float",
+      "sample_value": "17.62288"
+    },
+    "lower.SecGtr20.data[0].turnover": {
+      "type": "float",
+      "sample_value": "45.752521056"
+    },
+    "lower.SecGtr20.timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    },
+    "lower.SecGtr20.indetifier": {
+      "type": "str",
+      "sample_value": "lowerSecGtr20"
+    },
+    "lower.SecGtr20.count": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "lower.SecGtr20.count.TOTAL": {
+      "type": "str",
+      "sample_value": "160"
+    },
+    "lower.SecGtr20.count.UPPER": {
+      "type": "str",
+      "sample_value": "101"
+    },
+    "lower.SecGtr20.count.LOWER": {
+      "type": "str",
+      "sample_value": "47"
+    },
+    "lower.SecGtr20.count.BOTH": {
+      "type": "str",
+      "sample_value": "12"
+    },
+    "lower.SecLwr20": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "lower.SecLwr20.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "lower.SecLwr20.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "lower.SecLwr20.data[0].symbol": {
+      "type": "str",
+      "sample_value": "VAKRANGEE"
+    },
+    "lower.SecLwr20.data[0].series": {
+      "type": "str",
+      "sample_value": "EQ"
+    },
+    "lower.SecLwr20.data[0].ltp": {
+      "type": "str",
+      "sample_value": "8.88"
+    },
+    "lower.SecLwr20.data[0].change": {
+      "type": "str",
+      "sample_value": "-0.47"
+    },
+    "lower.SecLwr20.data[0].pChange": {
+      "type": "str",
+      "sample_value": "  -5.03"
+    },
+    "lower.SecLwr20.data[0].priceBand": {
+      "type": "str",
+      "sample_value": "5"
+    },
+    "lower.SecLwr20.data[0].highPrice": {
+      "type": "float",
+      "sample_value": "9.45"
+    },
+    "lower.SecLwr20.data[0].lowPrice": {
+      "type": "float",
+      "sample_value": "8.88"
+    },
+    "lower.SecLwr20.data[0].yearHigh": {
+      "type": "float",
+      "sample_value": "38.2"
+    },
+    "lower.SecLwr20.data[0].yearLow": {
+      "type": "float",
+      "sample_value": "8.25"
+    },
+    "lower.SecLwr20.data[0].totalTradedVol": {
+      "type": "float",
+      "sample_value": "260.8788"
+    },
+    "lower.SecLwr20.data[0].turnover": {
+      "type": "float",
+      "sample_value": "23.40082836"
+    },
+    "lower.SecLwr20.timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    },
+    "lower.SecLwr20.indetifier": {
+      "type": "str",
+      "sample_value": "lowerSecLwr20"
+    },
+    "lower.SecLwr20.count": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "lower.SecLwr20.count.TOTAL": {
+      "type": "str",
+      "sample_value": "160"
+    },
+    "lower.SecLwr20.count.UPPER": {
+      "type": "str",
+      "sample_value": "101"
+    },
+    "lower.SecLwr20.count.LOWER": {
+      "type": "str",
+      "sample_value": "47"
+    },
+    "lower.SecLwr20.count.BOTH": {
+      "type": "str",
+      "sample_value": "12"
+    },
+    "both": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "both.AllSec": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "both.AllSec.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "both.AllSec.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "both.AllSec.data[0].symbol": {
+      "type": "str",
+      "sample_value": "BGRENERGY"
+    },
+    "both.AllSec.data[0].series": {
+      "type": "str",
+      "sample_value": "BE"
+    },
+    "both.AllSec.data[0].ltp": {
+      "type": "str",
+      "sample_value": "264.48"
+    },
+    "both.AllSec.data[0].change": {
+      "type": "str",
+      "sample_value": "12.59"
+    },
+    "both.AllSec.data[0].pChange": {
+      "type": "str",
+      "sample_value": "   5.00"
+    },
+    "both.AllSec.data[0].priceBand": {
+      "type": "str",
+      "sample_value": "5"
+    },
+    "both.AllSec.data[0].highPrice": {
+      "type": "float",
+      "sample_value": "264.48"
+    },
+    "both.AllSec.data[0].lowPrice": {
+      "type": "float",
+      "sample_value": "239.29"
+    },
+    "both.AllSec.data[0].yearHigh": {
+      "type": "int",
+      "sample_value": "270"
+    },
+    "both.AllSec.data[0].yearLow": {
+      "type": "float",
+      "sample_value": "34.5"
+    },
+    "both.AllSec.data[0].totalTradedVol": {
+      "type": "float",
+      "sample_value": "7.29926"
+    },
+    "both.AllSec.data[0].turnover": {
+      "type": "float",
+      "sample_value": "18.360558603999998"
+    },
+    "both.AllSec.timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    },
+    "both.AllSec.indetifier": {
+      "type": "str",
+      "sample_value": "bothAllSec"
+    },
+    "both.AllSec.count": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "both.AllSec.count.TOTAL": {
+      "type": "str",
+      "sample_value": "160"
+    },
+    "both.AllSec.count.UPPER": {
+      "type": "str",
+      "sample_value": "101"
+    },
+    "both.AllSec.count.LOWER": {
+      "type": "str",
+      "sample_value": "47"
+    },
+    "both.AllSec.count.BOTH": {
+      "type": "str",
+      "sample_value": "12"
+    },
+    "both.SecGtr20": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "both.SecGtr20.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "both.SecGtr20.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "both.SecGtr20.data[0].symbol": {
+      "type": "str",
+      "sample_value": "BGRENERGY"
+    },
+    "both.SecGtr20.data[0].series": {
+      "type": "str",
+      "sample_value": "BE"
+    },
+    "both.SecGtr20.data[0].ltp": {
+      "type": "str",
+      "sample_value": "264.48"
+    },
+    "both.SecGtr20.data[0].change": {
+      "type": "str",
+      "sample_value": "12.59"
+    },
+    "both.SecGtr20.data[0].pChange": {
+      "type": "str",
+      "sample_value": "   5.00"
+    },
+    "both.SecGtr20.data[0].priceBand": {
+      "type": "str",
+      "sample_value": "5"
+    },
+    "both.SecGtr20.data[0].highPrice": {
+      "type": "float",
+      "sample_value": "264.48"
+    },
+    "both.SecGtr20.data[0].lowPrice": {
+      "type": "float",
+      "sample_value": "239.29"
+    },
+    "both.SecGtr20.data[0].yearHigh": {
+      "type": "int",
+      "sample_value": "270"
+    },
+    "both.SecGtr20.data[0].yearLow": {
+      "type": "float",
+      "sample_value": "34.5"
+    },
+    "both.SecGtr20.data[0].totalTradedVol": {
+      "type": "float",
+      "sample_value": "7.29926"
+    },
+    "both.SecGtr20.data[0].turnover": {
+      "type": "float",
+      "sample_value": "18.360558603999998"
+    },
+    "both.SecGtr20.timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    },
+    "both.SecGtr20.indetifier": {
+      "type": "str",
+      "sample_value": "bothSecGtr20"
+    },
+    "both.SecGtr20.count": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "both.SecGtr20.count.TOTAL": {
+      "type": "str",
+      "sample_value": "160"
+    },
+    "both.SecGtr20.count.UPPER": {
+      "type": "str",
+      "sample_value": "101"
+    },
+    "both.SecGtr20.count.LOWER": {
+      "type": "str",
+      "sample_value": "47"
+    },
+    "both.SecGtr20.count.BOTH": {
+      "type": "str",
+      "sample_value": "12"
+    },
+    "both.SecLwr20": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "both.SecLwr20.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "both.SecLwr20.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "both.SecLwr20.data[0].symbol": {
+      "type": "str",
+      "sample_value": "GVKPIL"
+    },
+    "both.SecLwr20.data[0].series": {
+      "type": "str",
+      "sample_value": "BE"
+    },
+    "both.SecLwr20.data[0].ltp": {
+      "type": "str",
+      "sample_value": "3.91"
+    },
+    "both.SecLwr20.data[0].change": {
+      "type": "str",
+      "sample_value": "-0.08"
+    },
+    "both.SecLwr20.data[0].pChange": {
+      "type": "str",
+      "sample_value": "  -2.01"
+    },
+    "both.SecLwr20.data[0].priceBand": {
+      "type": "str",
+      "sample_value": "2"
+    },
+    "both.SecLwr20.data[0].highPrice": {
+      "type": "float",
+      "sample_value": "4.06"
+    },
+    "both.SecLwr20.data[0].lowPrice": {
+      "type": "float",
+      "sample_value": "3.91"
+    },
+    "both.SecLwr20.data[0].yearHigh": {
+      "type": "float",
+      "sample_value": "7.52"
+    },
+    "both.SecLwr20.data[0].yearLow": {
+      "type": "float",
+      "sample_value": "3.03"
+    },
+    "both.SecLwr20.data[0].totalTradedVol": {
+      "type": "float",
+      "sample_value": "13.3933"
+    },
+    "both.SecLwr20.data[0].turnover": {
+      "type": "float",
+      "sample_value": "0.53171401"
+    },
+    "both.SecLwr20.timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    },
+    "both.SecLwr20.indetifier": {
+      "type": "str",
+      "sample_value": "bothSecLwr20"
+    },
+    "both.SecLwr20.count": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "both.SecLwr20.count.TOTAL": {
+      "type": "str",
+      "sample_value": "160"
+    },
+    "both.SecLwr20.count.UPPER": {
+      "type": "str",
+      "sample_value": "101"
+    },
+    "both.SecLwr20.count.LOWER": {
+      "type": "str",
+      "sample_value": "47"
+    },
+    "both.SecLwr20.count.BOTH": {
+      "type": "str",
+      "sample_value": "12"
+    }
+  },
+  "advance_decline": {
+    "timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 16:00:00"
+    },
+    "advance": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "advance.indetifier": {
+      "type": "str",
+      "sample_value": "Advances"
+    },
+    "advance.count": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "advance.count.Advances": {
+      "type": "int",
+      "sample_value": "1598"
+    },
+    "advance.count.Unchange": {
+      "type": "int",
+      "sample_value": "109"
+    },
+    "advance.count.Declines": {
+      "type": "int",
+      "sample_value": "1423"
+    },
+    "advance.count.Total": {
+      "type": "int",
+      "sample_value": "3130"
+    },
+    "advance.data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "advance.data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "advance.data[0].identifier": {
+      "type": "str",
+      "sample_value": "ADANIPOWEREQN"
+    },
+    "advance.data[0].symbol": {
+      "type": "str",
+      "sample_value": "ADANIPOWER"
+    },
+    "advance.data[0].series": {
+      "type": "str",
+      "sample_value": "EQ"
+    },
+    "advance.data[0].marketType": {
+      "type": "str",
+      "sample_value": "N"
+    },
+    "advance.data[0].pchange": {
+      "type": "float",
+      "sample_value": "13.42"
+    },
+    "advance.data[0].change": {
+      "type": "float",
+      "sample_value": "84.75"
+    },
+    "advance.data[0].basePrice": {
+      "type": "int",
+      "sample_value": "0"
+    },
+    "advance.data[0].previousClose": {
+      "type": "float",
+      "sample_value": "631.35"
+    },
+    "advance.data[0].lastPrice": {
+      "type": "float",
+      "sample_value": "716.1"
+    },
+    "advance.data[0].totalTradedVolume": {
+      "type": "float",
+      "sample_value": "863.24006"
+    },
+    "advance.data[0].issuedCap": {
+      "type": "int",
+      "sample_value": "3856938941"
+    },
+    "advance.data[0].totalTradedValue": {
+      "type": "float",
+      "sample_value": "6030.595059159999"
+    },
+    "advance.data[0].totalMarketCap": {
+      "type": "float",
+      "sample_value": "276195.39756501006"
+    }
+  },
+  "all_indices": {
+    "data": {
+      "type": "list",
+      "sample_value": null
+    },
+    "data[0]": {
+      "type": "list_item",
+      "sample_value": null
+    },
+    "data[0].key": {
+      "type": "str",
+      "sample_value": "INDICES ELIGIBLE IN DERIVATIVES"
+    },
+    "data[0].index": {
+      "type": "str",
+      "sample_value": "NIFTY 50"
+    },
+    "data[0].indexSymbol": {
+      "type": "str",
+      "sample_value": "NIFTY 50"
+    },
+    "data[0].last": {
+      "type": "float",
+      "sample_value": "25327.05"
+    },
+    "data[0].variation": {
+      "type": "float",
+      "sample_value": "-96.55"
+    },
+    "data[0].percentChange": {
+      "type": "float",
+      "sample_value": "-0.38"
+    },
+    "data[0].open": {
+      "type": "float",
+      "sample_value": "25410.2"
+    },
+    "data[0].high": {
+      "type": "float",
+      "sample_value": "25428.75"
+    },
+    "data[0].low": {
+      "type": "float",
+      "sample_value": "25286.3"
+    },
+    "data[0].previousClose": {
+      "type": "float",
+      "sample_value": "25423.6"
+    },
+    "data[0].yearHigh": {
+      "type": "float",
+      "sample_value": "26277.35"
+    },
+    "data[0].yearLow": {
+      "type": "float",
+      "sample_value": "21743.65"
+    },
+    "data[0].indicativeClose": {
+      "type": "int",
+      "sample_value": "0"
+    },
+    "data[0].pe": {
+      "type": "str",
+      "sample_value": "22.25"
+    },
+    "data[0].pb": {
+      "type": "str",
+      "sample_value": "3.38"
+    },
+    "data[0].dy": {
+      "type": "str",
+      "sample_value": "1.34"
+    },
+    "data[0].declines": {
+      "type": "str",
+      "sample_value": "27"
+    },
+    "data[0].advances": {
+      "type": "str",
+      "sample_value": "23"
+    },
+    "data[0].unchanged": {
+      "type": "str",
+      "sample_value": "0"
+    },
+    "data[0].perChange365d": {
+      "type": "float",
+      "sample_value": "-0.2"
+    },
+    "data[0].perChange30d": {
+      "type": "float",
+      "sample_value": "1.39"
+    },
+    "data[0].date365dAgo": {
+      "type": "str",
+      "sample_value": "18-Sep-2024"
+    },
+    "data[0].date30dAgo": {
+      "type": "str",
+      "sample_value": "19-Aug-2025"
+    },
+    "data[0].previousDay": {
+      "type": "str",
+      "sample_value": "19-Sep-2025"
+    },
+    "data[0].oneWeekAgo": {
+      "type": "str",
+      "sample_value": "12-Sep-2025"
+    },
+    "data[0].oneMonthAgoVal": {
+      "type": "float",
+      "sample_value": "24980.65"
+    },
+    "data[0].oneWeekAgoVal": {
+      "type": "int",
+      "sample_value": "25114"
+    },
+    "data[0].oneYearAgoVal": {
+      "type": "float",
+      "sample_value": "25377.55"
+    },
+    "data[0].previousDayVal": {
+      "type": "float",
+      "sample_value": "25327.05"
+    },
+    "data[0].chart365dPath": {
+      "type": "str",
+      "sample_value": "https://nsearchives.nseindia.com/365d/NIFTY-50.svg"
+    },
+    "data[0].chart30dPath": {
+      "type": "str",
+      "sample_value": "https://nsearchives.nseindia.com/30d/NIFTY-50.svg"
+    },
+    "data[0].chartTodayPath": {
+      "type": "str",
+      "sample_value": "https://nsearchives.nseindia.com/today/NIFTY-50.svg"
+    },
+    "timestamp": {
+      "type": "str",
+      "sample_value": "19-Sep-2025 15:30"
+    },
+    "advances": {
+      "type": "int",
+      "sample_value": "4138"
+    },
+    "declines": {
+      "type": "int",
+      "sample_value": "3909"
+    },
+    "unchanged": {
+      "type": "int",
+      "sample_value": "19"
+    },
+    "dates": {
+      "type": "dict",
+      "sample_value": null
+    },
+    "dates.previousDay": {
+      "type": "str",
+      "sample_value": "19-Sep-2025"
+    },
+    "dates.oneWeekAgo": {
+      "type": "str",
+      "sample_value": "12-Sep-2025"
+    },
+    "dates.oneMonthAgo": {
+      "type": "str",
+      "sample_value": "19-Aug-2025"
+    },
+    "dates.oneYearAgo": {
+      "type": "str",
+      "sample_value": "18-Sep-2024"
+    }
+  }
+}

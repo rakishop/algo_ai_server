@@ -1,0 +1,371 @@
+import requests
+from typing import Dict, Any
+
+class NSEClient:
+    def __init__(self):
+        self.session = requests.Session()
+        self.base_url = "https://www.nseindia.com"
+        self.headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
+            'Accept': '*/*',
+            'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
+
+            'Referer': 'https://www.nseindia.com/market-data/52-week-high-equity-market',
+            'sec-ch-ua': '"Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-origin',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+        }
+        self.session.headers.update(self.headers)
+        self._initialize_session()
+    
+    def _initialize_session(self):
+        """Initialize session by visiting main page to get cookies"""
+        try:
+            self.session.get(f"{self.base_url}/market-data/52-week-high-equity-market", timeout=10)
+        except:
+            pass
+    
+    def get_52week_high_stocks(self) -> Dict[str, Any]:
+        """Fetch 52-week high stock data"""
+        try:
+            response = self.session.get(
+                f"{self.base_url}/api/live-analysis-52weekhighstock",
+                timeout=10
+            )
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            return {"error": str(e), "data": None}
+    
+    def get_52week_high_stocks_data(self) -> Dict[str, Any]:
+        """Fetch detailed 52-week high stock data"""
+        try:
+            response = self.session.get(
+                f"{self.base_url}/api/live-analysis-data-52weekhighstock",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+    def get_52week_low_stocks_data(self) -> Dict[str, Any]:
+        """Fetch detailed 52-week low stock data"""
+        try:
+            response = self.session.get(
+                f"{self.base_url}/api/live-analysis-data-52weeklowstock",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+    def get_gainers_data(self) -> Dict[str, Any]:
+        """Fetch gainers data"""
+        try:
+            response = self.session.get(
+                f"{self.base_url}/api/live-analysis-variations?index=gainers",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+
+    def get_losers_data(self) -> Dict[str, Any]:
+        """Fetch losers data"""
+        try:
+            response = self.session.get(
+                f"{self.base_url}/api/live-analysis-variations?index=loosers",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+    def get_most_active_securities(self) -> Dict[str, Any]:
+        """Fetch most active securities by value"""
+        try:
+            response = self.session.get(
+                f"{self.base_url}/api/live-analysis-most-active-securities?index=value",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+
+    def get_most_active_sme(self) -> Dict[str, Any]:
+        """Fetch most active SME by volume"""
+        try:
+            response = self.session.get(
+                f"{self.base_url}/api/live-analysis-most-active-sme?index=volume",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+
+    def get_sec_gainers(self) -> Dict[str, Any]:
+        """Fetch security gainers"""
+        try:
+            response = self.session.get(
+                f"{self.base_url}/api/live-analysis-variations?index=gainers&key=SecGtr20",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+
+    def get_volume_gainers(self) -> Dict[str, Any]:
+        """Fetch volume gainers"""
+        try:
+            response = self.session.get(
+                f"{self.base_url}/api/live-analysis-volume-gainers",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+    def get_price_band_hitter(self) -> Dict[str, Any]:
+        """Fetch price band hitter data"""
+        try:
+            response = self.session.get(
+                f"{self.base_url}/api/live-analysis-price-band-hitter",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+    def get_advance_decline(self) -> Dict[str, Any]:
+        """Fetch advance decline data"""
+        try:
+            response = self.session.get(
+                f"{self.base_url}/api/live-analysis-advance",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+    def get_unchanged_data(self) -> Dict[str, Any]:
+        """Fetch unchanged data"""
+        try:
+            response = self.session.get(
+                f"{self.base_url}/api/live-analysis-unchanged",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+
+    def get_decline_data(self) -> Dict[str, Any]:
+        """Fetch decline data"""
+        try:
+            response = self.session.get(
+                f"{self.base_url}/api/live-analysis-decline",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+    def get_stocks_traded(self) -> Dict[str, Any]:
+        """Fetch stocks traded data"""
+        try:
+            response = self.session.get(
+                f"{self.base_url}/api/live-analysis-stocksTraded",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+    def get_derivatives_snapshot(self) -> Dict[str, Any]:
+        """Fetch derivatives snapshot data"""
+        try:
+            response = self.session.get(
+                f"{self.base_url}/api/snapshot-derivatives-equity?index=contracts&limit=20",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+    def get_most_active_underlying(self) -> Dict[str, Any]:
+        """Fetch most active underlying data"""
+        try:
+            response = self.session.get(
+                f"{self.base_url}/api/live-analysis-most-active-underlying",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+    def get_oi_spurts_underlyings(self) -> Dict[str, Any]:
+        """Fetch OI spurts underlyings data"""
+        try:
+            response = self.session.get(
+                f"{self.base_url}/api/live-analysis-oi-spurts-underlyings",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+
+    def get_oi_spurts_contracts(self) -> Dict[str, Any]:
+        """Fetch OI spurts contracts data"""
+        try:
+            response = self.session.get(
+                f"{self.base_url}/api/live-analysis-oi-spurts-contracts",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+    def get_large_deals(self) -> Dict[str, Any]:
+        """Fetch large deals data"""
+        try:
+            response = self.session.get(
+                f"{self.base_url}/api/snapshot-capital-market-largedeal",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+    def get_all_indices(self) -> Dict[str, Any]:
+        """Fetch all indices data"""
+        try:
+            response = self.session.get(
+                f"{self.base_url}/api/allIndices",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+    
+    def get_option_chain_info(self, symbol: str = "NIFTY") -> Dict[str, Any]:
+        """Fetch option chain contract info"""
+        try:
+            # Visit option chain page first to get proper cookies
+            self.session.get(f"{self.base_url}/option-chain", timeout=10)
+            
+            # Update headers for option chain API
+            headers = {
+                'Referer': f'https://www.nseindia.com/option-chain?symbolCode=-10006&symbol={symbol}&symbol={symbol}&instrument=-&date=-&segmentLink=17&symbolCount=2&segmentLink=17',
+                'sec-fetch-dest': 'empty',
+                'sec-fetch-mode': 'cors',
+                'sec-fetch-site': 'same-origin'
+            }
+            
+            response = self.session.get(
+                f"{self.base_url}/api/option-chain-contract-info?symbol={symbol}",
+                headers=headers,
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+    
+    def get_option_chain(self, symbol: str = "NIFTY", expiry: str = None) -> Dict[str, Any]:
+        """Fetch option chain data"""
+        try:
+            # Visit option chain page first to get proper cookies
+            self.session.get(f"{self.base_url}/option-chain", timeout=10)
+            
+            url = f"{self.base_url}/api/option-chain-v3?type=Indices&symbol={symbol}"
+            if expiry:
+                url += f"&expiry={expiry}"
+            
+            # Update headers for option chain API
+            headers = {
+                'Referer': f'https://www.nseindia.com/option-chain?symbolCode=-10006&symbol={symbol}&symbol={symbol}&instrument=-&date=-&segmentLink=17&symbolCount=2&segmentLink=17',
+                'sec-fetch-dest': 'empty',
+                'sec-fetch-mode': 'cors',
+                'sec-fetch-site': 'same-origin'
+            }
+            
+            response = self.session.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
