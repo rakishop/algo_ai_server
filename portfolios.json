@@ -1,0 +1,22 @@
+{
+  "test_001": {
+    "portfolio_id": "test_001",
+    "name": "Test Portfolio",
+    "total_capital": 100000,
+    "available_cash": 75432.5,
+    "positions": [
+      {
+        "symbol": "RELIANCE",
+        "quantity": 10,
+        "entry_price": 2456.75,
+        "entry_date": "2025-09-21T19:18:22.299219",
+        "position_type": "LONG",
+        "stop_loss": 2300,
+        "target_price": null,
+        "current_price": null
+      }
+    ],
+    "created_date": "2025-09-21T19:18:20.259885",
+    "risk_tolerance": "MEDIUM"
+  }
+}
