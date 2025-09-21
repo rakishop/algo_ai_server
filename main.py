@@ -55,6 +55,14 @@ app.include_router(enhanced_router)
 # Start background tasks
 @app.on_event("startup")
 async def startup_event():
+    # Train ML models on startup
+    try:
+        from train_models import train_from_json_files, setup_training_data
+        if not train_from_json_files():
+            setup_training_data()
+    except Exception as e:
+        print(f"Training warning: {e}")
+    
     # Start the market data streaming in background
     asyncio.create_task(manager.start_market_stream())
 

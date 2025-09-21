@@ -1,8 +1,9 @@
 import requests
 import json
 import time
+from config import settings
 
-BASE_URL = "http://localhost:8000"
+BASE_URL = settings.base_url
 
 def test_new_features():
     print("🚀 Testing MyAlgoFax NSE API v3.0 New Features\n")
