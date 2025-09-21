@@ -37,6 +37,32 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         manager.disconnect(websocket)
 
+# WebSocket Info Endpoint (shows in docs)
+@router.get("/api/v1/websocket/info")
+def websocket_info():
+    """Get WebSocket connection information and usage guide"""
+    return {
+        "websocket_url": "ws://localhost:8000/ws",
+        "status": "active",
+        "connection_guide": {
+            "url": "ws://localhost:8000/ws",
+            "protocol": "WebSocket",
+            "message_format": "JSON"
+        },
+        "subscribe_example": {
+            "action": "subscribe",
+            "symbol": "RELIANCE"
+        },
+        "response_types": [
+            "subscription_confirmed",
+            "market_update",
+            "symbol_update"
+        ],
+        "javascript_example": "const ws = new WebSocket('ws://localhost:8000/ws'); ws.send(JSON.stringify({action: 'subscribe', symbol: 'RELIANCE'}));",
+        "active_connections": len(manager.active_connections),
+        "subscriptions": len(manager.subscriptions)
+    }
+
 # Portfolio Management Endpoints
 @router.post("/api/v1/portfolio/create")
 def create_portfolio(portfolio_data: dict):
@@ -282,3 +308,19 @@ def get_pivot_points(symbol: str):
         
     except Exception as e:
         return {"error": str(e)}
+
+# WebSocket Test Endpoint
+@router.get("/api/v1/websocket/test")
+def test_websocket_connection():
+    """Test WebSocket connection status"""
+    return {
+        "websocket_endpoint": "/ws",
+        "status": "available",
+        "active_connections": len(manager.active_connections),
+        "total_subscriptions": len(manager.subscriptions),
+        "test_instructions": {
+            "step1": "Connect to ws://localhost:8000/ws",
+            "step2": "Send: {\"action\": \"subscribe\", \"symbol\": \"RELIANCE\"}",
+            "step3": "Receive real-time market updates"
+        }
+    }

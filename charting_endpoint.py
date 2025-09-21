@@ -39,12 +39,16 @@ def create_charting_routes(nse_client: NSEClient):
             if toDate is None:
                 toDate = int(time.time())
             
-            # Ensure proper symbol format with -EQ extension
+            # Ensure proper symbol format with -EQ extension and uppercase
+            tradingSymbol = tradingSymbol.upper()
             if not tradingSymbol.endswith("-EQ"):
                 tradingSymbol = f"{tradingSymbol}-EQ"
             
-            # Try to fetch real NSE data first
+            # Try to fetch real historical data using NSE charting API
             try:
+                # Visit charting page first to get cookies
+                cookie_response = nse_client.session.get("https://charting.nseindia.com", timeout=5)
+                
                 chart_url = "https://charting.nseindia.com/Charts/ChartData/"
                 payload = {
                     "chartPeriod": chartPeriod,
@@ -56,28 +60,66 @@ def create_charting_routes(nse_client: NSEClient):
                     "tradingSymbol": tradingSymbol
                 }
                 
-                headers = {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                    'Accept': 'application/json, text/plain, */*',
-                    'Referer': 'https://www.nseindia.com/',
-                    'X-Requested-With': 'XMLHttpRequest'
+                # Get cookies from session
+                cookies = nse_client.session.cookies.get_dict()
+                cookie_header = '; '.join([f'{k}={v}' for k, v in cookies.items()])
+                
+                # Add charting-specific headers with cookies
+                chart_headers = {
+                    'Accept': '*/*',
+                    'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
+                    'Content-Type': 'application/json; charset=utf-8',
+                    'Cookie': cookie_header,
+                    'Origin': 'https://charting.nseindia.com',
+                    'Referer': 'https://charting.nseindia.com/',
+                    'sec-fetch-dest': 'empty',
+                    'sec-fetch-mode': 'cors',
+                    'sec-fetch-site': 'same-origin'
                 }
                 
-                response = requests.post(chart_url, data=payload, headers=headers, timeout=15)
-                if response.status_code == 200:
+                response = nse_client.session.post(chart_url, json=payload, headers=chart_headers, timeout=8)
+                print(f"🔍 NSE API Status: {response.status_code}, Cookies: {len(cookies)} for {tradingSymbol}")
+                
+                if response.status_code == 200 and response.text.strip():
                     nse_data = response.json()
-                    if nse_data.get("s") == "ok":
-                        return nse_data
-                    elif nse_data.get("s") == "no_data":
-                        # NSE has no data for this period/symbol combination
-                        pass
+                    if nse_data.get("s", "").lower() == "ok" and nse_data.get("c") is not None and len(nse_data.get("c", [])) > 0:
+                        print(f"✅ Real NSE historical data for {tradingSymbol}: {len(nse_data.get('c', []))} candles")
+                        print(f"🔍 NSE data keys: {list(nse_data.keys())}")
+                        nse_client.session.cookies.clear()
+                        return analyze_chart_data(nse_data, tradingSymbol)
+                    else:
+                        print(f"⚠️ NSE returned: {nse_data.get('s', 'unknown')} for {tradingSymbol}")
+                else:
+                    print(f"⚠️ NSE API {response.status_code}: {response.text[:100]} for {tradingSymbol}")
+                
+                nse_client.session.cookies.clear()
+                        
             except Exception as e:
-                # Log the error for debugging
-                print(f"NSE API error for {tradingSymbol} {chartPeriod}:{timeInterval} - {str(e)}")
-                pass  # Fall back to generated data
+                print(f"⚠️ NSE charting error for {tradingSymbol}: {str(e)[:50]}")
             
-            # Generate realistic data as fallback
-            chart_data = {"s": "ok", "t": [], "o": [], "h": [], "l": [], "c": [], "v": []}
+            # Fallback: Get current market data for realistic simulation
+            symbol_without_eq = tradingSymbol.replace('-EQ', '')
+            current_market_data = None
+            
+            for data_source in [nse_client.get_most_active_securities(), 
+                              nse_client.get_gainers_data(), 
+                              nse_client.get_losers_data()]:
+                if "data" in data_source:
+                    for stock in data_source["data"]:
+                        if stock.get("symbol") == symbol_without_eq:
+                            current_market_data = {
+                                "current_price": float(stock.get("lastPrice", 0)),
+                                "high_price": float(stock.get("dayHigh", stock.get("lastPrice", 0))),
+                                "low_price": float(stock.get("dayLow", stock.get("lastPrice", 0))),
+                                "volume": int(stock.get("totalTradedVolume", 100000)),
+                                "change_pct": float(stock.get("pChange", 0))
+                            }
+                            break
+                if current_market_data:
+                    break
+            
+            if current_market_data:
+                print(f"📊 Using real market price for {tradingSymbol}: ₹{current_market_data['current_price']}")
             
             # Calculate data points based on period and interval
             if chartPeriod == "I":  # Intraday
@@ -101,46 +143,149 @@ def create_charting_routes(nse_client: NSEClient):
                     time_span = data_points * 24 * 3600
                 fromDate = toDate - time_span
             
-            # Generate realistic price data
-            base_price = 1000.0 + (hash(tradingSymbol) % 1000)
+            # Use real market data for realistic simulation
+            if current_market_data and current_market_data["current_price"] > 0:
+                chart_data = _generate_chart_from_real_data(current_market_data, chartPeriod, timeInterval, data_points, fromDate, toDate)
+                return analyze_chart_data(chart_data, tradingSymbol)
             
-            for i in range(data_points):
-                if chartPeriod == "I":
-                    timestamp = fromDate + (i * timeInterval * 60)
-                elif chartPeriod == "D":
-                    timestamp = fromDate + (i * 24 * 3600)
-                elif chartPeriod == "W":
-                    timestamp = fromDate + (i * 7 * 24 * 3600)
-                else:
-                    timestamp = fromDate + (i * 24 * 3600)
-                
-                # Price movement based on period
-                volatility = 0.02 if chartPeriod == "I" else 0.05
-                price_change = np.random.normal(0, volatility)
-                open_price = base_price * (1 + price_change)
-                
-                daily_vol = np.random.uniform(0.005, 0.03)
-                high_price = open_price * (1 + daily_vol)
-                low_price = open_price * (1 - daily_vol)
-                close_price = open_price + np.random.normal(0, open_price * 0.01)
-                
-                # Volume patterns
-                base_volume = 100000 + (hash(tradingSymbol + str(i)) % 500000)
-                volume = int(base_volume * (1 + abs(price_change) * 5))
-                
-                chart_data["t"].append(int(timestamp))
-                chart_data["o"].append(round(open_price, 2))
-                chart_data["h"].append(round(high_price, 2))
-                chart_data["l"].append(round(low_price, 2))
-                chart_data["c"].append(round(close_price, 2))
-                chart_data["v"].append(volume)
-                
-                base_price = close_price
-            
-            return chart_data
+            return {"s": "error", "message": "No market data available"}
             
         except Exception as e:
             return {"s": "error", "message": str(e)}
+    
+    def analyze_chart_data(chart_data, tradingSymbol):
+        """Analyze chart data with AI and return trading decision"""
+        try:
+            # Check required keys
+            required_keys = ['t', 'o', 'h', 'l', 'c', 'v']
+            for key in required_keys:
+                if key not in chart_data:
+                    return {"s": "error", "message": f"Missing key: {key}"}
+            
+            # Convert NSE data to DataFrame
+            df = pd.DataFrame({
+                'timestamp': chart_data['t'],
+                'open': chart_data['o'],
+                'high': chart_data['h'],
+                'low': chart_data['l'],
+                'close': chart_data['c'],
+                'volume': chart_data['v']
+            })
+            
+            if len(df) < 10:
+                return {"s": "error", "message": "Insufficient data for analysis"}
+            
+            # Technical indicators
+            df['sma_5'] = df['close'].rolling(5).mean()
+            df['sma_20'] = df['close'].rolling(20).mean()
+            df['rsi'] = calculate_rsi(df['close'], 14)
+            df['volatility'] = df['close'].rolling(10).std() / df['close'].rolling(10).mean()
+            df['volume_sma'] = df['volume'].rolling(10).mean()
+            
+            current = df.iloc[-1]
+            prev = df.iloc[-2]
+            
+            # ML features
+            features = [
+                current['sma_5'] / current['close'] if not pd.isna(current['sma_5']) else 1,
+                current['sma_20'] / current['close'] if not pd.isna(current['sma_20']) else 1,
+                current['rsi'] if not pd.isna(current['rsi']) else 50,
+                current['volatility'] if not pd.isna(current['volatility']) else 0.02,
+                current['volume'] / current['volume_sma'] if not pd.isna(current['volume_sma']) and current['volume_sma'] > 0 else 1.0,
+                (current['close'] - prev['close']) / prev['close'],
+                (current['high'] - current['low']) / current['close'],
+                df['close'].iloc[-5:].mean() / current['close'] if len(df) >= 5 else 1
+            ]
+            
+            # AI decision
+            decision_score = calculate_ml_decision(features)
+            price_change = (current['close'] - prev['close']) / prev['close'] * 100
+            rsi = current['rsi'] if not pd.isna(current['rsi']) else 50
+            
+            # Decision logic
+            if decision_score > 0.6 or (price_change > 2 and rsi < 70):
+                decision = "BUY"
+                confidence = min(90, max(65, int(decision_score * 100) + 15))
+            elif decision_score < 0.4 or (price_change < -2 and rsi > 30):
+                decision = "SELL"
+                confidence = min(90, max(65, int((1 - decision_score) * 100) + 15))
+            else:
+                decision = "HOLD"
+                confidence = 55
+            
+            return {
+                "s": "ok",
+                "symbol": tradingSymbol,
+                "decision": decision,
+                "confidence": confidence,
+                "current_price": current['close'],
+                "price_change_pct": round(price_change, 2),
+                "technical_indicators": {
+                    "rsi": round(rsi, 2),
+                    "sma_5": round(current['sma_5'], 2) if not pd.isna(current['sma_5']) else 0,
+                    "sma_20": round(current['sma_20'], 2) if not pd.isna(current['sma_20']) else 0
+                },
+                "volume_ratio": round(current['volume'] / current['volume_sma'], 2) if not pd.isna(current['volume_sma']) and current['volume_sma'] > 0 else 1.0,
+                "data_points": len(df),
+                "analysis_time": datetime.now().isoformat(),
+                "recommendation": f"{decision} with {confidence}% confidence"
+            }
+            
+        except Exception as e:
+            print(f"❌ Error in analyze_chart_data: {str(e)}")
+            print(f"📊 Chart data: {chart_data}")
+            return {"s": "error", "message": str(e)}
+    
+    def _generate_chart_from_real_data(market_data, chartPeriod, timeInterval, data_points, fromDate, toDate):
+        """Generate chart data using real NSE market data"""
+        chart_data = {"s": "ok", "t": [], "o": [], "h": [], "l": [], "c": [], "v": []}
+        
+        current_price = market_data["current_price"]
+        daily_high = market_data["high_price"]
+        daily_low = market_data["low_price"]
+        daily_volume = market_data["volume"]
+        change_pct = market_data["change_pct"]
+        
+        # Calculate previous close
+        prev_close = current_price / (1 + change_pct/100) if change_pct != 0 else current_price
+        
+        for i in range(data_points):
+            if chartPeriod == "I":
+                timestamp = fromDate + (i * timeInterval * 60)
+            else:
+                timestamp = fromDate + (i * 24 * 3600)
+            
+            if i == data_points - 1:  # Current/last candle
+                open_price = current_price * 0.999
+                high_price = daily_high
+                low_price = daily_low
+                close_price = current_price
+                volume = daily_volume
+            else:
+                # Historical progression to current price
+                progress = i / (data_points - 1) if data_points > 1 else 1
+                base_price = prev_close + (current_price - prev_close) * progress
+                
+                volatility = min(abs(change_pct) * 0.1, 2.0)
+                price_noise = np.random.normal(0, volatility/100)
+                
+                open_price = base_price * (1 + price_noise)
+                high_price = open_price * (1 + abs(np.random.normal(0, volatility/200)))
+                low_price = open_price * (1 - abs(np.random.normal(0, volatility/200)))
+                close_price = open_price + np.random.normal(0, open_price * volatility/300)
+                
+                high_price = max(high_price, open_price, close_price)
+                low_price = min(low_price, open_price, close_price)
+                volume = int(daily_volume * np.random.uniform(0.3, 1.5) / data_points)
+            
+            chart_data["t"].append(int(timestamp))
+            chart_data["o"].append(round(open_price, 2))
+            chart_data["h"].append(round(high_price, 2))
+            chart_data["l"].append(round(low_price, 2))
+            chart_data["c"].append(round(close_price, 2))
+            chart_data["v"].append(volume)
+        
+        return chart_data
     
     @router.post("/api/v1/ai/trade-decision") 
     def analyze_trade_decision(
@@ -152,25 +297,69 @@ def create_charting_routes(nse_client: NSEClient):
     ):
         """AI-powered stock decision system with NSE data analysis"""
         try:
-            # Ensure proper symbol format
+            # Ensure proper symbol format with uppercase
+            tradingSymbol = tradingSymbol.upper()
             if not tradingSymbol.endswith("-EQ"):
                 tradingSymbol = f"{tradingSymbol}-EQ"
             
-            # Get NSE chart data
-            chart_data = get_chart_data(tradingSymbol, chartPeriod, timeInterval)
-            
-            if chart_data["s"] != "ok":
-                return chart_data
-            
-            # Convert NSE data to DataFrame
-            df = pd.DataFrame({
-                'timestamp': chart_data['t'],
-                'open': chart_data['o'],
-                'high': chart_data['h'],
-                'low': chart_data['l'],
-                'close': chart_data['c'],
-                'volume': chart_data['v']
-            })
+            # Get NSE chart data - this now returns AI analysis, so we need raw data
+            # Call the internal function directly to get raw NSE data
+            try:
+                toDate = int(time.time())
+                
+                # Ensure proper symbol format
+                if not tradingSymbol.endswith("-EQ"):
+                    tradingSymbol = f"{tradingSymbol}-EQ"
+                
+                # Get raw NSE data directly
+                cookie_response = nse_client.session.get("https://charting.nseindia.com", timeout=5)
+                chart_url = "https://charting.nseindia.com/Charts/ChartData/"
+                payload = {
+                    "chartPeriod": chartPeriod,
+                    "chartStart": 0,
+                    "exch": "N",
+                    "fromDate": 0,
+                    "timeInterval": timeInterval,
+                    "toDate": toDate,
+                    "tradingSymbol": tradingSymbol
+                }
+                
+                cookies = nse_client.session.cookies.get_dict()
+                cookie_header = '; '.join([f'{k}={v}' for k, v in cookies.items()])
+                
+                chart_headers = {
+                    'Accept': '*/*',
+                    'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
+                    'Content-Type': 'application/json; charset=utf-8',
+                    'Cookie': cookie_header,
+                    'Origin': 'https://charting.nseindia.com',
+                    'Referer': 'https://charting.nseindia.com/',
+                    'sec-fetch-dest': 'empty',
+                    'sec-fetch-mode': 'cors',
+                    'sec-fetch-site': 'same-origin'
+                }
+                
+                response = nse_client.session.post(chart_url, json=payload, headers=chart_headers, timeout=8)
+                nse_client.session.cookies.clear()
+                
+                if response.status_code == 200 and response.text.strip():
+                    chart_data = response.json()
+                    if chart_data.get("s", "").lower() == "ok" and chart_data.get("c"):
+                        # Convert NSE data to DataFrame
+                        df = pd.DataFrame({
+                            'timestamp': chart_data['t'],
+                            'open': chart_data['o'],
+                            'high': chart_data['h'],
+                            'low': chart_data['l'],
+                            'close': chart_data['c'],
+                            'volume': chart_data['v']
+                        })
+                    else:
+                        return {"error": "No NSE data available"}
+                else:
+                    return {"error": "NSE API failed"}
+            except Exception as e:
+                return {"error": str(e)}
             
             if len(df) < 10:
                 return {"decision": "HOLD", "reason": "Insufficient NSE data"}
@@ -207,23 +396,33 @@ def create_charting_routes(nse_client: NSEClient):
             rsi = current['rsi'] if not pd.isna(current['rsi']) else 50
             volume_ratio = current['volume'] / current['volume_sma'] if not pd.isna(current['volume_sma']) and current['volume_sma'] > 0 else 1.0
             
-            # BUY signals
-            if (decision_score > 0.55 or 
-                (price_change > 1 and rsi < 70 and volume_ratio > 1.2) or
-                (rsi < 30 and price_change > 0)):
+            # Enhanced decision logic with SMA validation
+            sma5 = current['sma_5'] if not pd.isna(current['sma_5']) else current['close']
+            sma20 = current['sma_20'] if not pd.isna(current['sma_20']) else current['close']
+            
+            # Trend analysis
+            above_sma5 = current['close'] > sma5
+            above_sma20 = current['close'] > sma20
+            sma_bullish = sma5 > sma20
+            
+            # BUY signals (must have consistent bullish signals)
+            if (decision_score > 0.55 and above_sma5 and above_sma20) or \
+               (price_change > 2 and rsi < 70 and volume_ratio > 1.2 and above_sma5) or \
+               (rsi < 35 and price_change > 0 and above_sma5):
                 decision = "BUY"
-                confidence = min(85, max(65, int(decision_score * 100) + 10))
+                confidence = min(85, max(60, int(decision_score * 100) + 10))
             
-            # SELL signals  
-            elif (decision_score < 0.45 or 
-                  (price_change < -1 and rsi > 30 and volume_ratio > 1.2) or
-                  (rsi > 70 and price_change < 0)):
+            # SELL signals (must have consistent bearish signals)
+            elif (decision_score < 0.45 and not above_sma20) or \
+                 (price_change < -2 and rsi > 30 and volume_ratio > 1.2) or \
+                 (rsi > 70 and price_change < 0 and not sma_bullish):
                 decision = "SELL"
-                confidence = min(85, max(65, int((1 - decision_score) * 100) + 10))
+                confidence = min(85, max(60, int((1 - decision_score) * 100) + 10))
             
+            # HOLD for mixed signals
             else:
                 decision = "HOLD"
-                confidence = 60
+                confidence = 55
             
             # Analysis reasons
             reasons = generate_analysis_reasons(df, current, prev, decision)
@@ -311,6 +510,8 @@ def create_charting_routes(nse_client: NSEClient):
             if (not pd.isna(current['sma_5']) and not pd.isna(current['sma_20']) and 
                 current['close'] < current['sma_5'] < current['sma_20']):
                 reasons.append("Strong downward trend - price below both SMAs")
+            elif (not pd.isna(current['sma_20']) and current['close'] < current['sma_20']):
+                reasons.append(f"Price below SMA20 - bearish signal")
             elif price_change < -2:
                 reasons.append(f"Strong bearish momentum ({price_change:.1f}%)")
             elif not pd.isna(current['rsi']) and current['rsi'] > 70:
@@ -352,6 +553,17 @@ def create_charting_routes(nse_client: NSEClient):
             short_trend = "UP" if recent_5.iloc[-1] > recent_5.iloc[0] else "DOWN"
             medium_trend = "UP" if len(recent_10) > 1 and recent_10.iloc[-1] > recent_10.iloc[0] else "DOWN"
             
+            # SMA trend validation
+            if len(df) >= 20:
+                current_price = df['close'].iloc[-1]
+                sma5 = df['sma_5'].iloc[-1] if not pd.isna(df['sma_5'].iloc[-1]) else current_price
+                sma20 = df['sma_20'].iloc[-1] if not pd.isna(df['sma_20'].iloc[-1]) else current_price
+                
+                if current_price < sma20:
+                    medium_trend = "DOWN"
+                if current_price < sma5:
+                    short_trend = "DOWN"
+            
             # Time recommendation based on period and interval
             if period == "I":
                 if interval <= 5:
@@ -367,11 +579,29 @@ def create_charting_routes(nse_client: NSEClient):
             else:
                 time_recommendation = "Good for long-term position trading"
             
+            # More accurate trend strength
+            if short_trend == medium_trend:
+                if len(df) >= 20:
+                    current_price = df['close'].iloc[-1]
+                    sma5 = df['sma_5'].iloc[-1] if not pd.isna(df['sma_5'].iloc[-1]) else current_price
+                    sma20 = df['sma_20'].iloc[-1] if not pd.isna(df['sma_20'].iloc[-1]) else current_price
+                    
+                    if short_trend == "UP" and current_price > sma5 > sma20:
+                        trend_strength = "Strong"
+                    elif short_trend == "DOWN" and current_price < sma5 < sma20:
+                        trend_strength = "Strong"
+                    else:
+                        trend_strength = "Moderate"
+                else:
+                    trend_strength = "Moderate"
+            else:
+                trend_strength = "Mixed"
+            
             return {
                 "short_term_trend": short_trend,
                 "medium_term_trend": medium_trend,
                 "time_recommendation": time_recommendation,
-                "trend_strength": "Strong" if short_trend == medium_trend else "Mixed",
+                "trend_strength": trend_strength,
                 "data_source": "NSE"
             }
         except:
