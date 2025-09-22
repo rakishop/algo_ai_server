@@ -6,7 +6,7 @@ def create_market_routes(nse_client):
     @router.get("/52-week-extremes")
     def get_52week_high_stocks_data():
         high_data = nse_client.get_52week_high_stocks_data()
-        low_data = nse_client.get_52week_low_stocks_data()
+        low_data = nse_client.get_52week_low_stocks_data() 
         analysis_response = nse_client.get_52week_high_stocks()
         return {
             "52_week_high": high_data,

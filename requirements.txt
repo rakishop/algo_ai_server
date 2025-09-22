@@ -11,3 +11,4 @@ scikit-learn==1.5.2
 websockets==13.1
 aiofiles==24.1.0
 python-multipart==0.0.12
+TA-Lib==0.6.7

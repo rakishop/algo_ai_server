@@ -32,9 +32,9 @@ class EnhancedAIEndpoints:
                     features = self.ml_analyzer.extract_features(stock)
                     momentum_score = self._calculate_momentum_score(stock, features)
                     
-                    if (stock.get('trade_quantity', 0) >= min_volume and 
-                        momentum_score > 60 and 
-                        stock.get('perChange', 0) > 2):
+                    if (stock.get('trade_quantity', 0) >= min_volume/2 and 
+                        momentum_score > 30 and 
+                        stock.get('perChange', 0) > 0.5):
                         
                         momentum_stocks.append({
                             **stock,

@@ -1,5 +1,6 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from nse_client import NSEClient
 from filtered_endpoints import FilteredEndpoints
 from ai_endpoints import AIEndpoints
@@ -14,7 +15,26 @@ from risk_manager import RiskManager
 import asyncio
 from typing import List, Dict
 
-app = FastAPI(title="NSE Market Data API", version="3.0.0", description="AI-Powered NSE market data with ML analysis, portfolio management, and real-time streaming")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    try:
+        from train_models import train_from_json_files, setup_training_data
+        if not train_from_json_files():
+            setup_training_data()
+    except Exception as e:
+        print(f"Training warning: {e}")
+    
+    asyncio.create_task(manager.start_market_stream())
+    yield
+    # Shutdown (if needed)
+
+app = FastAPI(
+    title="NSE Market Data API", 
+    version="3.0.0", 
+    description="AI-Powered NSE market data with ML analysis, portfolio management, and real-time streaming",
+    lifespan=lifespan
+)
 
 # Add CORS middleware
 app.add_middleware(
@@ -41,6 +61,10 @@ ml_analyzer = MLStockAnalyzer()
 filtered_endpoints = FilteredEndpoints(app, nse_client)
 ai_endpoints = AIEndpoints(app, nse_client)
 
+# Initialize enhanced AI endpoints
+from enhanced_ai_endpoints import EnhancedAIEndpoints
+enhanced_ai_endpoints = EnhancedAIEndpoints(app, nse_client)
+
 # Include route modules
 app.include_router(create_market_routes(nse_client))
 app.include_router(create_derivatives_routes(nse_client))
@@ -52,19 +76,7 @@ app.include_router(create_charting_routes(nse_client))
 from enhanced_endpoints import router as enhanced_router
 app.include_router(enhanced_router)
 
-# Start background tasks
-@app.on_event("startup")
-async def startup_event():
-    # Train ML models on startup
-    try:
-        from train_models import train_from_json_files, setup_training_data
-        if not train_from_json_files():
-            setup_training_data()
-    except Exception as e:
-        print(f"Training warning: {e}")
-    
-    # Start the market data streaming in background
-    asyncio.create_task(manager.start_market_stream())
+
 
 @app.get("/")
 def welcome():
@@ -328,6 +340,156 @@ def detect_options_spikes(
             "analysis_method": "Time-based Spike Detection",
             "underlying_value": processed_chain["underlying_value"],
             "refresh_note": "Call this endpoint every minute to track spikes over time"
+        }
+        
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/technical/indicators")
+def get_technical_indicators(
+    symbol: str = "RELIANCE"
+):
+    """Get AI-powered technical indicators using pandas and ML models"""
+    try:
+        from ai_technical_analyzer import AITechnicalAnalyzer
+        
+        # Get market data
+        gainers_data = nse_client.get_gainers_data()
+        active_data = nse_client.get_most_active_securities()
+        volume_data = nse_client.get_volume_gainers()
+        
+        # Find symbol in the data
+        symbol = symbol.upper()
+        stock_data = None
+        
+        # Search across all data sources
+        for data_source in [gainers_data, active_data, volume_data]:
+            if data_source.get("data"):
+                for stock in data_source["data"]:
+                    if stock.get("symbol") == symbol:
+                        stock_data = stock
+                        break
+            if stock_data:
+                break
+        
+        if not stock_data:
+            # Get available symbols for debugging
+            available_symbols = []
+            for data_source in [gainers_data, active_data, volume_data]:
+                if data_source and data_source.get("data"):
+                    available_symbols.extend([s.get("symbol", "") for s in data_source["data"][:5]])
+            
+            return {
+                "error": f"Symbol {symbol} not found in current market data",
+                "available_symbols": list(set(available_symbols)),
+                "suggestion": "Try using one of the available symbols or check if markets are open"
+            }
+        
+        # Get market context for AI analysis
+        market_context = []
+        for data_source in [gainers_data, active_data]:
+            if data_source.get("data"):
+                market_context.extend(data_source["data"][:10])  # Top 10 from each
+        
+        # Initialize AI analyzer
+        ai_analyzer = AITechnicalAnalyzer()
+        
+        # Perform AI analysis
+        analysis_result = ai_analyzer.analyze_stock(stock_data, market_context)
+        
+        return analysis_result
+        
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/technical/multi-timeframe")
+def get_multi_timeframe_analysis(
+    symbol: str = "RELIANCE"
+):
+    """Get multi-timeframe AI technical analysis"""
+    try:
+        from ai_technical_analyzer import AITechnicalAnalyzer
+        
+        # Get current stock data
+        gainers_data = nse_client.get_gainers_data()
+        active_data = nse_client.get_most_active_securities()
+        
+        symbol = symbol.upper()
+        stock_data = None
+        
+        for data_source in [gainers_data, active_data]:
+            if data_source.get("data"):
+                for stock in data_source["data"]:
+                    if stock.get("symbol") == symbol:
+                        stock_data = stock
+                        break
+            if stock_data:
+                break
+        
+        if not stock_data:
+            # Get available symbols for debugging
+            available_symbols = []
+            for data_source in [gainers_data, active_data]:
+                if data_source and data_source.get("data"):
+                    available_symbols.extend([s.get("symbol", "") for s in data_source["data"][:5]])
+            
+            return {
+                "error": f"Symbol {symbol} not found in current market data",
+                "available_symbols": list(set(available_symbols)),
+                "suggestion": "Try using one of the available symbols or check if markets are open"
+            }
+        
+        ai_analyzer = AITechnicalAnalyzer()
+        
+        # Simulate different timeframes with varying volatility
+        timeframes = {
+            "5min": {"volatility_factor": 0.5, "trend_factor": 0.3},
+            "15min": {"volatility_factor": 0.7, "trend_factor": 0.5},
+            "1hour": {"volatility_factor": 1.0, "trend_factor": 0.8},
+            "daily": {"volatility_factor": 1.5, "trend_factor": 1.0}
+        }
+        
+        analysis_results = {}
+        consensus_signals = []
+        
+        for tf_name, tf_params in timeframes.items():
+            # Modify stock data for different timeframes
+            tf_stock_data = stock_data.copy()
+            current_change = float(stock_data.get('perChange', 0))
+            tf_stock_data['perChange'] = current_change * tf_params['trend_factor']
+            
+            # Analyze for this timeframe
+            try:
+                tf_analysis = ai_analyzer.analyze_stock(tf_stock_data, [])
+                analysis_results[tf_name] = tf_analysis
+                
+                # Collect signals for consensus
+                if 'ai_analysis' in tf_analysis and tf_analysis['ai_analysis']:
+                    signal = tf_analysis['ai_analysis'].get('predicted_signal', 'HOLD')
+                    confidence = tf_analysis['ai_analysis'].get('confidence', 50)
+                    consensus_signals.append((signal, confidence, tf_params['trend_factor']))
+            except Exception as e:
+                analysis_results[tf_name] = {"error": f"Analysis failed: {str(e)}"}
+        
+        # Calculate consensus
+        weighted_signals = {}
+        for signal, confidence, weight in consensus_signals:
+            if signal not in weighted_signals:
+                weighted_signals[signal] = 0
+            weighted_signals[signal] += confidence * weight
+        
+        consensus_signal = max(weighted_signals, key=weighted_signals.get) if weighted_signals else "HOLD"
+        consensus_confidence = max(weighted_signals.values()) / sum(weighted_signals.values()) * 100 if weighted_signals else 50
+        
+        return {
+            "symbol": symbol,
+            "multi_timeframe_analysis": analysis_results,
+            "consensus": {
+                "signal": consensus_signal,
+                "confidence": round(consensus_confidence, 2),
+                "agreement_level": "High" if consensus_confidence > 70 else "Medium" if consensus_confidence > 50 else "Low"
+            },
+            "analysis_method": "AI Multi-Timeframe Technical Analysis"
         }
         
     except Exception as e:
