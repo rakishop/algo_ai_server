@@ -4,6 +4,10 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 from dataclasses import dataclass, asdict
 from ml_analyzer import MLStockAnalyzer
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 @dataclass
 class Position:
@@ -170,14 +174,18 @@ class PortfolioManager:
             for pid, portfolio in self.portfolios.items():
                 data[pid] = asdict(portfolio)
             
-            with open('portfolios.json', 'w') as f:
+            data_path = os.getenv("TRAINING_DATA_PATH", "./data/")
+            os.makedirs(data_path, exist_ok=True)
+            
+            with open(f'{data_path}portfolios.json', 'w') as f:
                 json.dump(data, f, indent=2)
         except Exception as e:
             print(f"Error saving portfolios: {e}")
     
     def load_portfolios(self):
         try:
-            with open('portfolios.json', 'r') as f:
+            data_path = os.getenv("TRAINING_DATA_PATH", "./data/")
+            with open(f'{data_path}portfolios.json', 'r') as f:
                 data = json.load(f)
             
             for pid, portfolio_data in data.items():

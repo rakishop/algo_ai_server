@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
+from typing import List
 from nse_client import NSEClient
 import requests
 import time
@@ -47,7 +48,8 @@ def create_charting_routes(nse_client: NSEClient):
             # Try to fetch real historical data using NSE charting API
             try:
                 # Visit charting page first to get cookies
-                cookie_response = nse_client.session.get("https://charting.nseindia.com", timeout=5)
+                session = nse_client._get_fresh_session()
+                cookie_response = session.get("https://charting.nseindia.com", timeout=5)
                 
                 chart_url = "https://charting.nseindia.com/Charts/ChartData/"
                 payload = {
@@ -61,7 +63,7 @@ def create_charting_routes(nse_client: NSEClient):
                 }
                 
                 # Get cookies from session
-                cookies = nse_client.session.cookies.get_dict()
+                cookies = session.cookies.get_dict()
                 cookie_header = '; '.join([f'{k}={v}' for k, v in cookies.items()])
                 
                 # Add charting-specific headers with cookies
@@ -77,7 +79,7 @@ def create_charting_routes(nse_client: NSEClient):
                     'sec-fetch-site': 'same-origin'
                 }
                 
-                response = nse_client.session.post(chart_url, json=payload, headers=chart_headers, timeout=8)
+                response = session.post(chart_url, json=payload, headers=chart_headers, timeout=8)
                 print(f"🔍 NSE API Status: {response.status_code}, Cookies: {len(cookies)} for {tradingSymbol}")
                 
                 if response.status_code == 200 and response.text.strip():
@@ -85,14 +87,14 @@ def create_charting_routes(nse_client: NSEClient):
                     if nse_data.get("s", "").lower() == "ok" and nse_data.get("c") is not None and len(nse_data.get("c", [])) > 0:
                         print(f"✅ Real NSE historical data for {tradingSymbol}: {len(nse_data.get('c', []))} candles")
                         print(f"🔍 NSE data keys: {list(nse_data.keys())}")
-                        nse_client.session.cookies.clear()
+                        session.cookies.clear()
                         return analyze_chart_data(nse_data, tradingSymbol)
                     else:
                         print(f"⚠️ NSE returned: {nse_data.get('s', 'unknown')} for {tradingSymbol}")
                 else:
                     print(f"⚠️ NSE API {response.status_code}: {response.text[:100]} for {tradingSymbol}")
                 
-                nse_client.session.cookies.clear()
+                session.close()
                         
             except Exception as e:
                 print(f"⚠️ NSE charting error for {tradingSymbol}: {str(e)[:50]}")
@@ -312,7 +314,8 @@ def create_charting_routes(nse_client: NSEClient):
                     tradingSymbol = f"{tradingSymbol}-EQ"
                 
                 # Get raw NSE data directly
-                cookie_response = nse_client.session.get("https://charting.nseindia.com", timeout=5)
+                session = nse_client._get_fresh_session()
+                cookie_response = session.get("https://charting.nseindia.com", timeout=5)
                 chart_url = "https://charting.nseindia.com/Charts/ChartData/"
                 payload = {
                     "chartPeriod": chartPeriod,
@@ -324,7 +327,7 @@ def create_charting_routes(nse_client: NSEClient):
                     "tradingSymbol": tradingSymbol
                 }
                 
-                cookies = nse_client.session.cookies.get_dict()
+                cookies = session.cookies.get_dict()
                 cookie_header = '; '.join([f'{k}={v}' for k, v in cookies.items()])
                 
                 chart_headers = {
@@ -339,8 +342,8 @@ def create_charting_routes(nse_client: NSEClient):
                     'sec-fetch-site': 'same-origin'
                 }
                 
-                response = nse_client.session.post(chart_url, json=payload, headers=chart_headers, timeout=8)
-                nse_client.session.cookies.clear()
+                response = session.post(chart_url, json=payload, headers=chart_headers, timeout=8)
+                session.close()
                 
                 if response.status_code == 200 and response.text.strip():
                     chart_data = response.json()
@@ -607,9 +610,9 @@ def create_charting_routes(nse_client: NSEClient):
         except:
             return {"analysis": "Unable to determine NSE time patterns"}
     
-    @router.post("/api/v1/ai/multi-stock-decision")
+    @router.get("/api/v1/ai/multi-stock-decision")
     def analyze_multiple_stocks(
-        symbols: list,
+        symbols: List[str] = Query(["RELIANCE", "TCS", "INFY", "HDFCBANK", "ICICIBANK"]),
         chartPeriod: str = "I",
         timeInterval: int = 15,
         topN: int = 10

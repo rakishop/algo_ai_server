@@ -1,19 +1,21 @@
 import os
 from pydantic_settings import BaseSettings
+from typing import Optional
 
 class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
     debug: bool = False
-    server_url: str = None
+    server_url: Optional[str] = None
+    telegram_bot_token: Optional[str] = None
+    telegram_chat_id: Optional[str] = None
     
     class Config:
         env_file = ".env"
+        extra = "ignore"
     
     @property
     def base_url(self) -> str:
-        if self.server_url:
-            return self.server_url
-        return f"http://localhost:{self.port}"
+        return self.server_url or f"http://{self.host}:{self.port}"
 
 settings = Settings()

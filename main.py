@@ -1,6 +1,10 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 from nse_client import NSEClient
 from filtered_endpoints import FilteredEndpoints
 from ai_endpoints import AIEndpoints
@@ -14,6 +18,8 @@ from portfolio_manager import PortfolioManager
 from risk_manager import RiskManager
 import asyncio
 from typing import List, Dict
+import schedule
+import threading
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -25,9 +31,34 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"Training warning: {e}")
     
-    asyncio.create_task(manager.start_market_stream())
+    stream_task = asyncio.create_task(manager.start_market_stream())
+    
+    # Start Telegram alerts scheduler
+    def run_telegram_alerts():
+        import requests
+        import os
+        try:
+            api_url = os.getenv("API_BASE_URL", "http://localhost:8000")
+            requests.get(f"{api_url}/api/v1/ai/telegram-alert")
+        except:
+            pass
+    
+    schedule.every(30).minutes.do(run_telegram_alerts)
+    
+    def run_scheduler():
+        while True:
+            schedule.run_pending()
+            import time
+            time.sleep(60)
+    
+    threading.Thread(target=run_scheduler, daemon=True).start()
     yield
-    # Shutdown (if needed)
+    # Shutdown
+    stream_task.cancel()
+    try:
+        await stream_task
+    except asyncio.CancelledError:
+        pass
 
 app = FastAPI(
     title="NSE Market Data API", 
@@ -523,6 +554,75 @@ def refresh_spike_data(symbol: str = "NIFTY"):
             "timestamp": datetime.now().isoformat(),
             "options_stored": len(all_options),
             "underlying_value": processed_chain["underlying_value"]
+        }
+        
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/ai/telegram-alert")
+async def send_telegram_alert():
+    """Send AI-analyzed top stocks to Telegram"""
+    try:
+        import requests
+        from config import settings
+        from datetime import datetime
+        from market_scanner import MarketScanner
+        from ai_stock_selector import AIStockSelector
+        
+        # Use comprehensive AI analysis
+        scanner = MarketScanner()
+        ai_selector = AIStockSelector()
+        
+        # Get comprehensive market scan
+        market_scan = scanner.comprehensive_market_scan()
+        
+        # Get AI-selected breakout stocks
+        breakout_scan = scanner.scan_breakout_stocks()
+        ai_breakouts = breakout_scan.get('breakout_opportunities', [])
+        
+        # Get momentum stocks
+        momentum_scan = scanner.scan_momentum_stocks()
+        ai_momentum = momentum_scan.get('momentum_opportunities', [])
+        
+        # Combine and score all opportunities
+        all_opportunities = ai_breakouts + ai_momentum
+        
+        # Separate gainers and losers with AI scoring
+        ai_gainers = [stock for stock in all_opportunities if stock.get('perChange', 0) > 0]
+        ai_losers = [stock for stock in all_opportunities if stock.get('perChange', 0) < 0]
+        
+        # Sort by AI scores
+        ai_gainers = sorted(ai_gainers, key=lambda x: x.get('breakout_score', x.get('momentum_score', 0)), reverse=True)[:5]
+        ai_losers = sorted(ai_losers, key=lambda x: x.get('breakout_score', x.get('momentum_score', 0)), reverse=True)[:4]
+        
+        # Create AI-powered message
+        message = f"🤖 AI MARKET ANALYSIS - {datetime.now().strftime('%H:%M')}\n\n"
+        message += "📈 TOP 5 AI BREAKOUT GAINERS\n"
+        for i, stock in enumerate(ai_gainers, 1):
+            score = stock.get('breakout_score', stock.get('momentum_score', 0))
+            signal_type = "BREAKOUT" if 'breakout_score' in stock else "MOMENTUM"
+            message += f"{i}. {stock['symbol']} | ₹{stock['ltp']:.1f} | +{stock['perChange']:.1f}% | AI:{score:.0f} {signal_type}\n"
+        
+        message += "\n📉 TOP 4 AI BREAKOUT LOSERS\n"
+        for i, stock in enumerate(ai_losers, 1):
+            score = stock.get('breakout_score', stock.get('momentum_score', 0))
+            signal_type = "BREAKOUT" if 'breakout_score' in stock else "MOMENTUM"
+            message += f"{i}. {stock['symbol']} | ₹{stock['ltp']:.1f} | {stock['perChange']:.1f}% | AI:{score:.0f} {signal_type}\n"
+        
+        message += f"\n💡 AI analyzed {len(all_opportunities)} opportunities"
+        
+        # Send to group
+        url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage"
+        data = {"chat_id": settings.telegram_chat_id, "text": message}
+        response = requests.post(url, data=data)
+        
+        return {
+            "status": "success" if response.json().get('ok') else "failed",
+            "message": "AI analysis sent to Telegram group",
+            "ai_gainers": len(ai_gainers),
+            "ai_losers": len(ai_losers),
+            "total_analyzed": len(all_opportunities),
+            "telegram_response": response.json()
         }
         
     except Exception as e:

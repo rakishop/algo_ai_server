@@ -18,5 +18,14 @@
     ],
     "created_date": "2025-09-21T19:18:20.259885",
     "risk_tolerance": "MEDIUM"
+  },
+  "demo-portfolio": {
+    "portfolio_id": "demo-portfolio",
+    "name": "Demo Portfolio",
+    "total_capital": 100000,
+    "available_cash": 100000,
+    "positions": [],
+    "created_date": "2025-09-22T09:35:48.052785",
+    "risk_tolerance": "MEDIUM"
   }
 }

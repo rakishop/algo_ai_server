@@ -3,6 +3,10 @@ import pandas as pd
 from typing import Dict, List, Tuple
 from datetime import datetime, timedelta
 from dataclasses import dataclass
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 @dataclass
 class RiskMetrics:
@@ -16,7 +20,7 @@ class RiskMetrics:
 
 class RiskManager:
     def __init__(self):
-        self.risk_free_rate = 0.06  # 6% annual risk-free rate
+        self.risk_free_rate = float(os.getenv("RISK_FREE_RATE", "0.06"))  # Annual risk-free rate from env
         
     def calculate_portfolio_risk(self, returns: List[float], market_returns: List[float] = None) -> RiskMetrics:
         """Calculate comprehensive risk metrics for a portfolio"""
