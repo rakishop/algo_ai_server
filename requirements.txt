@@ -12,3 +12,4 @@ websockets==13.1
 aiofiles==24.1.0
 python-multipart==0.0.12
 TA-Lib==0.6.7
+schedule==1.2.0
