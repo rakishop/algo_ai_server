@@ -559,6 +559,30 @@ def refresh_spike_data(symbol: str = "NIFTY"):
     except Exception as e:
         return {"error": str(e)}
 
+@app.get("/api/v1/telegram/poll")
+async def telegram_poll():
+    """Poll for new Telegram messages and respond"""
+    try:
+        import requests
+        from telegram_handler import TelegramHandler
+        
+        handler = TelegramHandler()
+        url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/getUpdates"
+        
+        response = requests.get(url)
+        updates = response.json()
+        
+        processed = 0
+        if updates.get("ok") and updates.get("result"):
+            for update in updates["result"][-5:]:  # Process last 5 messages
+                if 'message' in update and update['message'].get('text'):
+                    handler.handle_message(update)
+                    processed += 1
+        
+        return {"status": "success", "processed_messages": processed}
+    except Exception as e:
+        return {"error": str(e)}
+
 @app.get("/api/v1/ai/telegram-alert")
 async def send_telegram_alert():
     """Send AI-analyzed top stocks to Telegram"""
