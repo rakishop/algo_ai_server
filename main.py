@@ -46,7 +46,7 @@ async def lifespan(app: FastAPI):
     schedule.every(3).minutes.do(run_telegram_alerts)
     
     def run_scheduler():
-        print("Starting Telegram scheduler (every 3 minutes)...)"
+        print("Starting Telegram scheduler (every 3 minutes)...")
         while True:
             try:
                 schedule.run_pending()
