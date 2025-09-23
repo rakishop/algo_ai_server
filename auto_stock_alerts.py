@@ -67,10 +67,10 @@ def is_market_open():
 
 def send_stock_alert():
     try:
-        # Check if market is open first (commented out for 24/7 alerts)
-        # if not is_market_open():
-        #     print(f"Market closed at {datetime.now().strftime('%H:%M:%S')} - skipping check")
-        #     return False
+        # Check if market is open first
+        if not is_market_open():
+            print(f"Market closed at {datetime.now().strftime('%H:%M:%S')} - skipping check")
+            return False
         
         print(f"Checking for new stocks at {datetime.now().strftime('%H:%M:%S')}")
         

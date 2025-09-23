@@ -43,10 +43,10 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             print(f"❌ Telegram alert failed: {e}")
     
-    schedule.every(30).minutes.do(run_telegram_alerts)
+    schedule.every(3).minutes.do(run_telegram_alerts)
     
     def run_scheduler():
-        print("🔄 Starting Telegram scheduler (every 30 minutes)...")
+        print("Starting Telegram scheduler (every 3 minutes)...)"
         while True:
             try:
                 schedule.run_pending()
