@@ -20,6 +20,7 @@ import asyncio
 from typing import List, Dict
 import schedule
 import threading
+import time
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -35,23 +36,30 @@ async def lifespan(app: FastAPI):
     
     # Start Telegram alerts scheduler
     def run_telegram_alerts():
-        import requests
-        import os
         try:
-            api_url = os.getenv("API_BASE_URL", "http://localhost:8000")
-            requests.get(f"{api_url}/api/v1/ai/telegram-alert")
-        except:
-            pass
+            from auto_stock_alerts import send_stock_alert
+            send_stock_alert()
+            print(f"✅ Telegram alert sent at {datetime.now().strftime('%H:%M:%S')}")
+        except Exception as e:
+            print(f"❌ Telegram alert failed: {e}")
     
     schedule.every(30).minutes.do(run_telegram_alerts)
     
     def run_scheduler():
+        print("🔄 Starting Telegram scheduler (every 30 minutes)...")
         while True:
-            schedule.run_pending()
-            import time
-            time.sleep(60)
+            try:
+                schedule.run_pending()
+                import time
+                time.sleep(60)
+            except Exception as e:
+                print(f"Scheduler error: {e}")
+                import time
+                time.sleep(60)
     
-    threading.Thread(target=run_scheduler, daemon=True).start()
+    scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
+    scheduler_thread.start()
+    print(f"📱 Telegram scheduler started at {datetime.now().strftime('%H:%M:%S')}")
     yield
     # Shutdown
     stream_task.cancel()
