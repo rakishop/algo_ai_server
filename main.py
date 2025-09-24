@@ -74,8 +74,16 @@ async def lifespan(app: FastAPI):
     
     scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
     scheduler_thread.start()
+    
+    # Start keep-alive service for Render.com
+    from keep_alive import KeepAlive
+    server_url = os.getenv("RENDER_EXTERNAL_URL", "http://localhost:8000")
+    keep_alive = KeepAlive(server_url)
+    keep_alive.start()
+    
     print(f"📱 Telegram scheduler started at {datetime.now().strftime('%H:%M:%S')}")
     print(f"📊 Volume alert scheduler started (every 3 minutes)")
+    print(f"🔄 Keep-alive service started for {server_url}")
     yield
     # Shutdown
     stream_task.cancel()
@@ -132,6 +140,10 @@ from enhanced_endpoints import router as enhanced_router
 app.include_router(enhanced_router)
 
 
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
 
 @app.get("/")
 def welcome():
