@@ -43,10 +43,25 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             print(f"❌ Telegram alert failed: {e}")
     
+    # Start Volume alerts scheduler
+    def run_volume_alerts():
+        try:
+            from volume_alert_system import VolumeAlertSystem
+            alert_system = VolumeAlertSystem()
+            if alert_system.is_market_open():
+                from volume_alert_system import send_volume_alert
+                send_volume_alert()
+                print(f"✅ Volume alert checked at {datetime.now().strftime('%H:%M:%S')}")
+            else:
+                print(f"📊 Market closed - skipping volume check at {datetime.now().strftime('%H:%M:%S')}")
+        except Exception as e:
+            print(f"❌ Volume alert failed: {e}")
+    
     schedule.every(30).minutes.do(run_telegram_alerts)
+    schedule.every(3).minutes.do(run_volume_alerts)
     
     def run_scheduler():
-        print("Starting Telegram scheduler (every 30 minutes)...")
+        print("Starting schedulers (Telegram: 30min, Volume: 3min)...")
         while True:
             try:
                 schedule.run_pending()
@@ -60,6 +75,7 @@ async def lifespan(app: FastAPI):
     scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
     scheduler_thread.start()
     print(f"📱 Telegram scheduler started at {datetime.now().strftime('%H:%M:%S')}")
+    print(f"📊 Volume alert scheduler started (every 3 minutes)")
     yield
     # Shutdown
     stream_task.cancel()
@@ -588,6 +604,21 @@ async def telegram_poll():
                     processed += 1
         
         return {"status": "success", "processed_messages": processed}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/ai/volume-alert")
+async def send_volume_alert_endpoint():
+    """Manually trigger volume spike alert"""
+    try:
+        from volume_alert_system import send_volume_alert
+        result = send_volume_alert()
+        
+        return {
+            "status": "success" if result else "no_spikes",
+            "message": "Volume alert sent" if result else "No volume spikes detected",
+            "timestamp": datetime.now().isoformat()
+        }
     except Exception as e:
         return {"error": str(e)}
 

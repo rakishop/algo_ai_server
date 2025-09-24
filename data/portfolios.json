@@ -1,0 +1,11 @@
+{
+  "demo-portfolio": {
+    "portfolio_id": "demo-portfolio",
+    "name": "Demo Portfolio",
+    "total_capital": 100000,
+    "available_cash": 100000,
+    "positions": [],
+    "created_date": "2025-09-24T09:26:44.768795",
+    "risk_tolerance": "MEDIUM"
+  }
+}
