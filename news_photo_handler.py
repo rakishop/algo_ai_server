@@ -119,6 +119,29 @@ class NewsPhotoHandler:
         except:
             return False
     
+    def get_smaller_image_url(self, url):
+        """Get smaller version of image URL"""
+        try:
+            # Common thumbnail patterns
+            if 'economictimes.indiatimes.com' in url:
+                return url.replace('/thumb/', '/small/').replace('?width=1200', '?width=400')
+            elif 'moneycontrol.com' in url:
+                return url.replace('_L.jpg', '_S.jpg').replace('_large.jpg', '_small.jpg')
+            elif 'livemint.com' in url:
+                return url.replace('/1600x900/', '/400x300/')
+            elif 'cnbctv18.com' in url:
+                return url.replace('/large/', '/medium/')
+            else:
+                # Generic size reduction
+                if '?width=' in url:
+                    return re.sub(r'width=\d+', 'width=400', url)
+                elif '?w=' in url:
+                    return re.sub(r'w=\d+', 'w=400', url)
+                else:
+                    return url + '?width=400'
+        except:
+            return url
+    
     def send_news_with_photo(self, news_item):
         """Send news with photo to Telegram"""
         try:
@@ -131,8 +154,8 @@ class NewsPhotoHandler:
             caption = f"📰 {title}\n\n{summary}\n\n🔗 {link}"
             
             if images:
-                # Send first image with caption 
-                photo_url = images[0]
+                # Send first image with caption using smaller size
+                photo_url = self.get_smaller_image_url(images[0])
                 url = f"https://api.telegram.org/bot{self.bot_token}/sendPhoto"
                 data = {
                     "chat_id": self.chat_id,
@@ -143,11 +166,12 @@ class NewsPhotoHandler:
                 
                 response = requests.post(url, data=data)
                 
-                # Send additional images if any
+                # Send additional images if any (smaller size)
                 for img_url in images[1:]:
+                    small_img_url = self.get_smaller_image_url(img_url)
                     img_data = {
                         "chat_id": self.chat_id,
-                        "photo": img_url
+                        "photo": small_img_url
                     }
                     requests.post(url, data=img_data)
                 

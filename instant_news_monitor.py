@@ -11,16 +11,12 @@ class InstantNewsMonitor:
     def __init__(self):
         self.fetcher = RealNewsFetcher()
         self.seen_news_file = "seen_news.json"
-        self.check_interval = 30  # Check every 30 seconds for faster alerts
+        self.check_interval = 15  # Check every 15 seconds for real-time alerts
+        self.last_summary_time = None
         
     def load_seen_news(self):
-        """Load previously seen news"""
-        try:
-            if os.path.exists(self.seen_news_file):
-                with open(self.seen_news_file, 'r') as f:
-                    return set(json.load(f))
-        except:
-            pass
+        """Load previously seen news - clear old cache"""
+        # Always start fresh - don't load old cache
         return set()
     
     def save_seen_news(self, seen_news):
@@ -32,46 +28,126 @@ class InstantNewsMonitor:
             print(f"Error saving seen news: {e}")
     
     def send_instant_alert(self, new_news):
-        """Send instant alert for new news"""
+        """Send instant alert for new news with photos"""
         try:
-            message = f"BREAKING NEWS - {datetime.now().strftime('%H:%M')}\n\n"
+            from news_photo_handler import NewsPhotoHandler
+            handler = NewsPhotoHandler()
             
-            for i, news in enumerate(new_news[:3], 1):  # Top 3 new items
-                title = news['title'][:80] + "..." if len(news['title']) > 80 else news['title']
-                summary = news.get('summary', '')[:150] + "..." if len(news.get('summary', '')) > 150 else news.get('summary', '')
-                source = news['source'].replace('_', ' ').title()
-                
-                title = news['title']
-                content = news.get('summary', '') or news.get('description', '')
-                
-                message += f"{i}. {title}\n"
-                if content and content != title:
-                    message += f"   {content}\n"
-                message += f"   Source: {source}\n\n"
+            for news in new_news[:3]:  # Send top 3 news items individually
+                # Check if news has images
+                if news.get('has_images') and news.get('images'):
+                    # Send with photo
+                    result = handler.send_news_with_photo(news)
+
+                else:
+                    # Send as text with full content
+                    title = news['title']
+                    content = news.get('summary', '') or news.get('description', '')
+                    source = news['source'].replace('_', ' ').title()
+                    link = news.get('link', '')
+                    
+                    message = f"🚨 BREAKING NEWS - {datetime.now().strftime('%H:%M')}\n\n"
+                    message += f"📰 {title}\n\n"
+                    if content and content != title:
+                        message += f"{content}\n\n"
+                    message += f"📡 Source: {source}\n"
+                    if link:
+                        message += f"🔗 {link}\n"
+                    message += "\n⚡ Breaking news alert"
+                    
+                    url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage"
+                    data = {
+                        "chat_id": settings.telegram_chat_id,
+                        "text": message,
+                        "parse_mode": "HTML"
+                    }
+                    
+                    response = requests.post(url, data=data, timeout=10)
+                    
+
             
-            message += "Breaking news alert"
-            
-            # Send to News Channel
-            news_channel = settings.telegram_news_channel_id or "@MyAlgoFaxNews"
-            url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage"
-            data = {"chat_id": news_channel, "text": message}
-            
-            response = requests.post(url, data=data, timeout=10)
-            
-            if response.status_code == 200 and response.json().get('ok'):
-                print(f"Instant news alert sent at {datetime.now().strftime('%H:%M:%S')}")
-                return True
-            else:
-                print(f"Failed to send instant alert: {response.text}")
-                return False
+            return True
                 
         except Exception as e:
-            print(f"Error sending instant alert: {e}")
+
+            return False
+    
+    def send_2hour_summary(self):
+        """Send 2-hour news summary with full news and photos"""
+        try:
+            current_time = datetime.now()
+            
+            # Check if 2 hours passed since last summary
+            if self.last_summary_time and (current_time - self.last_summary_time).total_seconds() < 7200:
+                return False
+            
+            news_data = self.fetcher.get_all_news()
+            
+            if not news_data or not news_data.get('news'):
+                return False
+            
+            # Get all news from last 2 hours
+            recent_news = news_data['news'][:10]  # Top 10 news items
+            
+            if not recent_news:
+                return False
+            
+            # Send header message
+            header_msg = f"📰 2-HOUR NEWS SUMMARY - {current_time.strftime('%H:%M')}\n\n📊 {len(recent_news)} news items"
+            
+            url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage"
+            data = {
+                "chat_id": settings.telegram_chat_id,
+                "text": header_msg,
+                "parse_mode": "HTML"
+            }
+            requests.post(url, data=data, timeout=10)
+            
+            # Send each news item with full content and photos
+            from news_photo_handler import NewsPhotoHandler
+            handler = NewsPhotoHandler()
+            
+            for i, news in enumerate(recent_news, 1):
+                # Check if news has images
+                if news.get('has_images') and news.get('images'):
+                    # Send with photo
+                    result = handler.send_news_with_photo(news)
+
+                else:
+                    # Send full text news
+                    title = news['title']
+                    content = news.get('summary', '') or news.get('description', '')
+                    source = news['source'].replace('_', ' ').title()
+                    link = news.get('link', '')
+                    
+                    message = f"📰 {i}/10 - {title}\n\n"
+                    if content and content != title:
+                        message += f"{content}\n\n"
+                    message += f"📡 Source: {source}\n"
+                    if link:
+                        message += f"🔗 {link}"
+                    
+                    data = {
+                        "chat_id": settings.telegram_chat_id,
+                        "text": message,
+                        "parse_mode": "HTML"
+                    }
+                    
+                    response = requests.post(url, data=data, timeout=10)
+                    
+
+            
+            self.last_summary_time = current_time
+
+            return True
+                
+        except Exception as e:
+
             return False
     
     def monitor_news(self):
         """Monitor for new news and send instant alerts"""
-        print("Starting instant news monitoring...")
+
         seen_news = self.load_seen_news()
         
         while True:
@@ -89,37 +165,54 @@ class InstantNewsMonitor:
                         # Get full news objects for new titles
                         new_news = [news for news in news_data['news'] if news['title'] in new_titles]
                         
-                        print(f"Found {len(new_news)} new news items")
+                        # Filter only real-time news (last 5 minutes)
+                        recent_news = []
+                        current_time = datetime.now()
+                        
+                        for news in new_news:
+                            # Check if news is really new (within last 5 minutes)
+                            news_time = None
+                            if news.get('published'):
+                                try:
+                                    from dateutil import parser
+                                    news_time = parser.parse(news['published'])
+                                except:
+                                    pass
+                            
+                            # If no timestamp or very recent (last 5 minutes), consider it new
+                            if not news_time or (current_time - news_time.replace(tzinfo=None)).total_seconds() <= 300:
+                                if news['title'] not in seen_news:
+                                    recent_news.append(news)
+                        
+                        new_news = recent_news
+                        
+
                         
                         # Check if market hours or after hours
                         now = datetime.now()
-                        if 9 <= now.hour <= 15:  # Market hours - instant alerts
+                        if 9 <= now.hour <= 15:  # Market hours - real-time alerts only
                             self.send_instant_alert(new_news)
-                        else:  # After hours - send summary
-                            from news_summarizer import create_and_send_summary
-                            create_and_send_summary(new_news)
+                        # Off-market hours - don't send individual news
                         
                         # Update seen news
                         seen_news.update(new_titles)
                         self.save_seen_news(seen_news)
                     else:
-                        # Only print during market hours to reduce spam
-                        now = datetime.now()
-                        if 9 <= now.hour <= 15:  # Market hours
-                            print(f"No new news at {datetime.now().strftime('%H:%M:%S')}")
+
                 
                 # Different intervals based on market hours
                 now = datetime.now()
-                if 9 <= now.hour <= 15:  # Market hours - check every 30 seconds
+                if 9 <= now.hour <= 15:  # Market hours - check every 15 seconds
                     time.sleep(self.check_interval)
-                else:  # After hours - check every 1 hour
-                    time.sleep(3600)
+                else:  # Off-market hours - send 2-hour summary
+                    self.send_2hour_summary()
+                    time.sleep(7200)  # Check every 2 hours
                 
             except KeyboardInterrupt:
-                print("\nStopping news monitoring...")
+    
                 break
             except Exception as e:
-                print(f"Error in news monitoring: {e}")
+
                 time.sleep(60)  # Wait 1 minute before retrying
 
 def start_instant_news_monitor():
