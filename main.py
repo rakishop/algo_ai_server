@@ -60,6 +60,28 @@ async def lifespan(app: FastAPI):
     schedule.every(30).minutes.do(run_telegram_alerts)
     schedule.every(3).minutes.do(run_volume_alerts)
     
+    # Smart alerts every 15 minutes
+    def run_smart_alerts():
+        try:
+            from smart_alerts import run_smart_alerts
+            run_smart_alerts()
+            print(f"✅ Smart alerts checked at {datetime.now().strftime('%H:%M:%S')}")
+        except Exception as e:
+            print(f"❌ Smart alerts failed: {e}")
+    
+    schedule.every(15).minutes.do(run_smart_alerts)
+    
+    # News alerts every 60 minutes
+    def run_news_alerts():
+        try:
+            from news_telegram_alert import send_news_to_telegram
+            send_news_to_telegram()
+            print(f"✅ News alert sent at {datetime.now().strftime('%H:%M:%S')}")
+        except Exception as e:
+            print(f"❌ News alert failed: {e}")
+    
+    schedule.every(60).minutes.do(run_news_alerts)
+    
     def run_scheduler():
         print("Starting schedulers (Telegram: 30min, Volume: 3min)...")
         while True:
@@ -75,6 +97,14 @@ async def lifespan(app: FastAPI):
     scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
     scheduler_thread.start()
     
+    # Start instant news monitoring
+    def start_news_monitor():
+        from instant_news_monitor import start_instant_news_monitor
+        start_instant_news_monitor()
+    
+    news_monitor_thread = threading.Thread(target=start_news_monitor, daemon=True)
+    news_monitor_thread.start()
+    
     # Start keep-alive service for Render.com
     from keep_alive import KeepAlive
     server_url = os.getenv("RENDER_EXTERNAL_URL", "http://localhost:8000")
@@ -83,6 +113,7 @@ async def lifespan(app: FastAPI):
     
     print(f"📱 Telegram scheduler started at {datetime.now().strftime('%H:%M:%S')}")
     print(f"📊 Volume alert scheduler started (every 3 minutes)")
+    print(f"⚡ Instant news monitor started (every 1 minute)")
     print(f"🔄 Keep-alive service started for {server_url}")
     yield
     # Shutdown
@@ -616,6 +647,73 @@ async def telegram_poll():
                     processed += 1
         
         return {"status": "success", "processed_messages": processed}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/ai/price-targets")
+async def get_price_targets(symbol: str = "RELIANCE"):
+    """Get AI price targets for stock"""
+    try:
+        from price_targets import analyze_stock_targets
+        return analyze_stock_targets(symbol)
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/ai/news-sentiment")
+async def get_news_sentiment_endpoint():
+    """Get market news sentiment analysis from real sources"""
+    try:
+        from news_sentiment import get_news_sentiment
+        return get_news_sentiment()
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/news/all-sources")
+async def get_all_news_sources():
+    """Get raw news from all sources"""
+    try:
+        from real_news_fetcher import fetch_real_news
+        return fetch_real_news()
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/news/nse-announcements")
+async def get_nse_announcements():
+    """Get NSE corporate announcements"""
+    try:
+        from real_news_fetcher import RealNewsFetcher
+        fetcher = RealNewsFetcher()
+        return {"announcements": fetcher.scrape_nse_announcements()}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/news/bse-announcements")
+async def get_bse_announcements():
+    """Get BSE announcements"""
+    try:
+        from real_news_fetcher import RealNewsFetcher
+        fetcher = RealNewsFetcher()
+        return {"announcements": fetcher.scrape_bse_announcements()}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/news/telegram-alert")
+async def send_news_alert():
+    """Send news update to Telegram"""
+    try:
+        from news_telegram_alert import send_news_to_telegram
+        result = send_news_to_telegram()
+        return {"status": "success" if result else "failed", "message": "News alert sent"}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/ai/smart-alerts")
+async def trigger_smart_alerts():
+    """Manually trigger smart alerts"""
+    try:
+        from smart_alerts import run_smart_alerts
+        run_smart_alerts()
+        return {"status": "success", "message": "Smart alerts triggered"}
     except Exception as e:
         return {"error": str(e)}
 

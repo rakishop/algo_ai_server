@@ -13,3 +13,6 @@ aiofiles==24.1.0
 python-multipart==0.0.12
 TA-Lib==0.6.7
 schedule==1.2.0
+feedparser==6.0.10
+beautifulsoup4==4.12.2
+lxml==4.9.3

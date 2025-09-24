@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     server_url: Optional[str] = None
     telegram_bot_token: Optional[str] = None
     telegram_chat_id: Optional[str] = None
+    telegram_news_channel_id: Optional[str] = None
     
     class Config:
         env_file = ".env"

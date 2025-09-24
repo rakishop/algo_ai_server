@@ -17,16 +17,27 @@ class VolumeAlertSystem:
         try:
             if os.path.exists(self.volume_history_file):
                 with open(self.volume_history_file, 'r') as f:
-                    return json.load(f)
+                    data = json.load(f)
+                    # Check if data is from previous day
+                    if 'timestamp' in data:
+                        data_date = datetime.fromisoformat(data['timestamp']).date()
+                        if data_date < datetime.now().date():
+                            print("Clearing old volume data from previous day")
+                            return {}
+                    return data
         except:
             pass
         return {}
     
     def save_volume_history(self, volume_data):
-        """Save current volume data"""
+        """Save current volume data with timestamp"""
         try:
+            data_with_timestamp = {
+                **volume_data,
+                'timestamp': datetime.now().isoformat()
+            }
             with open(self.volume_history_file, 'w') as f:
-                json.dump(volume_data, f)
+                json.dump(data_with_timestamp, f)
         except Exception as e:
             print(f"Error saving volume history: {e}")
     
@@ -196,12 +207,25 @@ class VolumeAlertSystem:
             print(f"Error sending Telegram alert: {e}")
             return False
     
+    def clear_cache_after_market(self):
+        """Clear cached data after market closes"""
+        try:
+            if os.path.exists(self.volume_history_file):
+                os.remove(self.volume_history_file)
+                print(f"Cleared volume cache after market close")
+        except Exception as e:
+            print(f"Error clearing cache: {e}")
+    
     def run_volume_check(self):
         """Run single volume check"""
         try:
             if not self.is_market_open():
+                # Clear cache when market is closed
+                self.clear_cache_after_market()
                 print(f"Market closed at {datetime.now().strftime('%H:%M:%S')} - skipping volume check")
                 return False
+            
+            print(f"Market is open - proceeding with volume check at {datetime.now().strftime('%H:%M:%S')}")
             
             print(f"Checking volume spikes at {datetime.now().strftime('%H:%M:%S')}")
             
@@ -217,6 +241,11 @@ class VolumeAlertSystem:
             volume_spikes = self.detect_volume_spikes(current_volumes, previous_volumes)
             
             if volume_spikes:
+                # Double-check market is still open before sending alert
+                if not self.is_market_open():
+                    print(f"Market closed during processing - not sending alert")
+                    return False
+                    
                 print(f"Volume spikes detected: {len(volume_spikes)} stocks")
                 success = self.send_telegram_alert(volume_spikes)
                 if success:
