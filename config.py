@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     telegram_bot_token: Optional[str] = None
     telegram_chat_id: Optional[str] = None
     telegram_news_channel_id: Optional[str] = None
+    twitter_bearer_token: Optional[str] = None
+    twitter_api_key: Optional[str] = None
+    twitter_api_secret: Optional[str] = None
     
     class Config:
         env_file = ".env"

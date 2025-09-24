@@ -34,19 +34,22 @@ class InstantNewsMonitor:
     def send_instant_alert(self, new_news):
         """Send instant alert for new news"""
         try:
-            message = f"🚨 BREAKING NEWS - {datetime.now().strftime('%H:%M')}\n\n"
+            message = f"BREAKING NEWS - {datetime.now().strftime('%H:%M')}\n\n"
             
             for i, news in enumerate(new_news[:3], 1):  # Top 3 new items
                 title = news['title'][:80] + "..." if len(news['title']) > 80 else news['title']
                 summary = news.get('summary', '')[:150] + "..." if len(news.get('summary', '')) > 150 else news.get('summary', '')
                 source = news['source'].replace('_', ' ').title()
                 
+                title = news['title']
+                content = news.get('summary', '') or news.get('description', '')
+                
                 message += f"{i}. {title}\n"
-                if summary:
-                    message += f"   📝 {summary}\n"
-                message += f"   📡 {source}\n\n"
+                if content and content != title:
+                    message += f"   {content}\n"
+                message += f"   Source: {source}\n\n"
             
-            message += "⚡ Breaking news alert"
+            message += "Breaking news alert"
             
             # Send to News Channel
             news_channel = settings.telegram_news_channel_id or "@MyAlgoFaxNews"
@@ -88,16 +91,29 @@ class InstantNewsMonitor:
                         
                         print(f"Found {len(new_news)} new news items")
                         
-                        # Send instant alert
-                        self.send_instant_alert(new_news)
+                        # Check if market hours or after hours
+                        now = datetime.now()
+                        if 9 <= now.hour <= 15:  # Market hours - instant alerts
+                            self.send_instant_alert(new_news)
+                        else:  # After hours - send summary
+                            from news_summarizer import create_and_send_summary
+                            create_and_send_summary(new_news)
                         
                         # Update seen news
                         seen_news.update(new_titles)
                         self.save_seen_news(seen_news)
                     else:
-                        print(f"No new news at {datetime.now().strftime('%H:%M:%S')}")
+                        # Only print during market hours to reduce spam
+                        now = datetime.now()
+                        if 9 <= now.hour <= 15:  # Market hours
+                            print(f"No new news at {datetime.now().strftime('%H:%M:%S')}")
                 
-                time.sleep(self.check_interval)
+                # Different intervals based on market hours
+                now = datetime.now()
+                if 9 <= now.hour <= 15:  # Market hours - check every 30 seconds
+                    time.sleep(self.check_interval)
+                else:  # After hours - check every 1 hour
+                    time.sleep(3600)
                 
             except KeyboardInterrupt:
                 print("\nStopping news monitoring...")

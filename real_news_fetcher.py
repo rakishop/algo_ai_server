@@ -12,7 +12,13 @@ class RealNewsFetcher:
             'business_standard': 'https://www.business-standard.com/rss/markets-106.rss',
             'livemint': 'https://www.livemint.com/rss/markets',
             'cnbc_tv18': 'https://www.cnbctv18.com/rss/market.xml',
-            'zee_business': 'https://zeenews.india.com/rss/business-news.xml'
+            'zee_business': 'https://zeenews.india.com/rss/business-news.xml',
+            'cnbc_awaaz': 'https://www.cnbctv18.com/rss/cnbc-awaaz.xml',
+            'financial_express': 'https://www.financialexpress.com/market/rss',
+            'hindu_business': 'https://www.thehindu.com/business/markets/feeder/default.rss',
+            'reuters_india': 'https://feeds.reuters.com/reuters/INbusinessNews',
+            'bloomberg_india': 'https://feeds.bloomberg.com/markets/news.rss',
+            'ndtv_business': 'https://feeds.feedburner.com/ndtvprofit-latest'
         }
         
         self.headers = {
@@ -42,10 +48,18 @@ class RealNewsFetcher:
         return all_news
     
     def scrape_nse_announcements(self):
-        """Scrape NSE corporate announcements"""
+        """Scrape NSE corporate announcements with proper session"""
         try:
+            # Create session and get cookies first
+            session = requests.Session()
+            session.headers.update(self.headers)
+            
+            # First visit main page to get cookies
+            session.get("https://www.nseindia.com/companies-listing/corporate-filings-announcements", timeout=10)
+            
+            # Now make API call with cookies
             url = "https://www.nseindia.com/api/corporates-corporateActions?index=equities"
-            response = requests.get(url, headers=self.headers, timeout=10)
+            response = session.get(url, timeout=10)
             
             if response.status_code == 200:
                 data = response.json()
@@ -60,6 +74,7 @@ class RealNewsFetcher:
                         'timestamp': datetime.now().isoformat()
                     })
                 
+                session.close()
                 return announcements
         except Exception as e:
             print(f"NSE scraping failed: {e}")
@@ -98,8 +113,12 @@ class RealNewsFetcher:
         """Scrape major TV channel websites"""
         tv_sources = {
             'cnbc_tv18': 'https://www.cnbctv18.com/market/',
+            'cnbc_awaaz': 'https://www.cnbctv18.com/cnbc-awaaz/',
             'et_now': 'https://www.etnow.in/market-news',
-            'zee_news': 'https://zeenews.india.com/business'
+            'zee_news': 'https://zeenews.india.com/business',
+            'ndtv_profit': 'https://www.ndtv.com/business/news',
+            'news18_business': 'https://www.news18.com/business/',
+            'india_today_business': 'https://www.indiatoday.in/business'
         }
         
         all_tv_news = []

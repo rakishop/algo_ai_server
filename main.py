@@ -82,6 +82,29 @@ async def lifespan(app: FastAPI):
     
     schedule.every(60).minutes.do(run_news_alerts)
     
+    # Sector news alerts every 2 hours
+    def run_sector_alerts():
+        try:
+            from sector_news_monitor import monitor_sector_news
+            alerts_sent = monitor_sector_news()
+            print(f"✅ Sector alerts: {alerts_sent} sent at {datetime.now().strftime('%H:%M:%S')}")
+        except Exception as e:
+            print(f"❌ Sector alerts failed: {e}")
+    
+    schedule.every(2).hours.do(run_sector_alerts)
+    
+    # Free Twitter monitoring every 10 minutes
+    def run_twitter_monitor():
+        try:
+            from free_twitter_scraper import scrape_free_tweets
+            result = scrape_free_tweets()
+            if result:
+                print(f"✅ Free Twitter alert sent at {datetime.now().strftime('%H:%M:%S')}")
+        except Exception as e:
+            print(f"❌ Free Twitter scraper failed: {e}")
+    
+    schedule.every(10).minutes.do(run_twitter_monitor)
+    
     def run_scheduler():
         print("Starting schedulers (Telegram: 30min, Volume: 3min)...")
         while True:
@@ -694,6 +717,26 @@ async def get_bse_announcements():
         from real_news_fetcher import RealNewsFetcher
         fetcher = RealNewsFetcher()
         return {"announcements": fetcher.scrape_bse_announcements()}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/news/sector-alerts")
+async def trigger_sector_alerts():
+    """Trigger sector-wise news alerts"""
+    try:
+        from sector_news_monitor import monitor_sector_news
+        alerts_sent = monitor_sector_news()
+        return {"status": "success", "alerts_sent": alerts_sent}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/twitter/monitor")
+async def trigger_twitter_monitor():
+    """Trigger free Twitter monitoring"""
+    try:
+        from free_twitter_scraper import scrape_free_tweets
+        result = scrape_free_tweets()
+        return {"status": "success" if result else "no_new_tweets"}
     except Exception as e:
         return {"error": str(e)}
 

@@ -19,26 +19,28 @@ def send_news_to_telegram():
         sentiment_result = sentiment.get_market_news_sentiment()
         
         # Format message
-        message = f"📰 MARKET NEWS UPDATE - {datetime.now().strftime('%H:%M')}\n\n"
+        message = f"MARKET NEWS UPDATE - {datetime.now().strftime('%H:%M')}\n\n"
         
         # Add sentiment
-        sentiment_emoji = "🟢" if sentiment_result['overall_sentiment'] == 'bullish' else "🔴" if sentiment_result['overall_sentiment'] == 'bearish' else "🟡"
-        message += f"{sentiment_emoji} Sentiment: {sentiment_result['overall_sentiment'].upper()}\n"
-        message += f"📊 Bullish: {sentiment_result['bullish_news']} | Bearish: {sentiment_result['bearish_news']}\n\n"
+        message += f"Sentiment: {sentiment_result['overall_sentiment'].upper()}\n"
+        message += f"Bullish: {sentiment_result['bullish_news']} | Bearish: {sentiment_result['bearish_news']}\n\n"
         
         # Add top 5 news headlines
-        message += "🔥 TOP NEWS:\n\n"
+        message += "TOP NEWS:\n\n"
         for i, news in enumerate(news_data['news'][:5], 1):
             title = news['title'][:80] + "..." if len(news['title']) > 80 else news['title']
             summary = news.get('summary', '')[:120] + "..." if len(news.get('summary', '')) > 120 else news.get('summary', '')
             source = news['source'].replace('_', ' ').title()
             
+            title = news['title']
+            content = news.get('summary', '') or news.get('description', '')
+            
             message += f"{i}. {title}\n"
-            if summary:
-                message += f"   📝 {summary}\n"
-            message += f"   📡 {source}\n\n"
+            if content and content != title:
+                message += f"   {content}\n"
+            message += f"   Source: {source}\n\n"
         
-        message += f"📈 Total News: {news_data.get('total_news', 0)} sources"
+        message += f"Total News: {news_data.get('total_news', 0)} sources"
         
         # Send to News Channel
         news_channel = settings.telegram_news_channel_id or "@MyAlgoFaxNews"

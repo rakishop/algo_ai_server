@@ -162,8 +162,8 @@ class VolumeAlertSystem:
             return False
         
         try:
-            message = f"🚨 VOLUME SPIKE ALERT - {datetime.now().strftime('%H:%M')}\n\n"
-            message += f"📈 HIGH VOLUME GAINERS ({len(volume_spikes)})\n\n"
+            message = f"VOLUME SPIKE ALERT - {datetime.now().strftime('%H:%M')}\n\n"
+            message += f"HIGH VOLUME GAINERS ({len(volume_spikes)})\n\n"
             
             for i, spike in enumerate(volume_spikes[:5], 1):  # Top 5
                 symbol = spike['symbol']
@@ -174,15 +174,15 @@ class VolumeAlertSystem:
                 
                 detection_method = spike.get('detection_method', 'Basic')
                 ai_score = spike.get('ai_score', vol_inc)
-                method_emoji = "🤖" if "AI" in detection_method else "📊"
+                method_type = "AI" if "AI" in detection_method else "Basic"
                 
-                message += f"{i}. {symbol} {method_emoji}\n"
-                message += f"   💰 ₹{price:.1f} ({price_change:+.1f}%)\n"
-                message += f"   📊 Volume: +{vol_inc:.1f}%\n"
-                message += f"   🎯 AI Score: {ai_score:.0f}\n"
-                message += f"   📈 Qty: {curr_vol:,}\n\n"
+                message += f"{i}. {symbol} ({method_type})\n"
+                message += f"   Price: Rs{price:.1f} ({price_change:+.1f}%)\n"
+                message += f"   Volume: +{vol_inc:.1f}%\n"
+                message += f"   AI Score: {ai_score:.0f}\n"
+                message += f"   Qty: {curr_vol:,}\n\n"
             
-            message += "⚡ Volume spikes detected every 3min"
+            message += "Volume spikes detected every 3min"
             
             # Send to Telegram
             chat_id = settings.telegram_chat_id or "-1002981590794"
