@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 import json
+from urllib.parse import urljoin
 
 class RealNewsFetcher:
     def __init__(self):
@@ -25,20 +26,53 @@ class RealNewsFetcher:
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
     
+    def extract_images_from_entry(self, entry):
+        """Extract images from RSS entry"""
+        images = []
+        
+        # Check for media content
+        if hasattr(entry, 'media_content'):
+            for media in entry.media_content:
+                if media.get('type', '').startswith('image/'):
+                    images.append(media['url'])
+        
+        # Check for enclosures
+        if hasattr(entry, 'enclosures'):
+            for enc in entry.enclosures:
+                if enc.get('type', '').startswith('image/'):
+                    images.append(enc.href)
+        
+        # Parse content for images
+        content = entry.get('summary', '') or entry.get('description', '')
+        if content:
+            soup = BeautifulSoup(content, 'html.parser')
+            img_tags = soup.find_all('img')
+            for img in img_tags:
+                src = img.get('src')
+                if src and hasattr(entry, 'link'):
+                    full_url = urljoin(entry.link, src)
+                    images.append(full_url)
+        
+        return images[:2]  # Max 2 images
+    
     def fetch_rss_news(self):
-        """Fetch news from RSS feeds"""
+        """Fetch news from RSS feeds with images"""
         all_news = []
         
         for source, url in self.rss_feeds.items():
             try:
                 feed = feedparser.parse(url)
                 for entry in feed.entries[:5]:  # Top 5 from each source
+                    images = self.extract_images_from_entry(entry)
+                    
                     all_news.append({
                         'title': entry.title,
                         'summary': entry.summary if hasattr(entry, 'summary') else entry.description if hasattr(entry, 'description') else '',
                         'source': source,
                         'link': entry.link if hasattr(entry, 'link') else '',
                         'published': entry.published if hasattr(entry, 'published') else '',
+                        'images': images,
+                        'has_images': len(images) > 0,
                         'timestamp': datetime.now().isoformat()
                     })
             except Exception as e:
