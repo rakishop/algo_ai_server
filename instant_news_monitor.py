@@ -2,6 +2,7 @@ import time
 import json
 import os
 from datetime import datetime
+import pytz
 from real_news_fetcher import RealNewsFetcher
 from news_telegram_alert import send_news_to_telegram
 import requests
@@ -13,6 +14,12 @@ class InstantNewsMonitor:
         self.seen_news_file = "seen_news.json"
         self.check_interval = 15  # Check every 15 seconds for real-time alerts
         self.last_summary_time = None
+        self.first_message_sent = False
+        self.ist = pytz.timezone('Asia/Kolkata')
+    
+    def get_current_time(self):
+        """Get current time in IST"""
+        return datetime.now(self.ist)
         
     def load_seen_news(self):
         """Load previously seen news - clear old cache"""
@@ -145,6 +152,29 @@ class InstantNewsMonitor:
 
             return False
     
+    def send_first_message(self):
+        """Send first message at 9:05 AM"""
+        try:
+            now = self.get_current_time()
+            if now.hour == 9 and now.minute >= 5 and not self.first_message_sent:
+                message = f"🌅 MARKET OPEN - {now.strftime('%H:%M')}\n\n📈 Real-time news monitoring started\n⚡ Breaking news alerts active"
+                
+                url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage"
+                data = {
+                    "chat_id": settings.telegram_chat_id,
+                    "text": message,
+                    "parse_mode": "HTML"
+                }
+                
+                response = requests.post(url, data=data, timeout=10)
+                
+                if response.status_code == 200 and response.json().get('ok'):
+                    self.first_message_sent = True
+                    return True
+        except Exception as e:
+            print(f"Error sending first message: {e}")
+        return False
+    
     def monitor_news(self):
         """Monitor for new news and send instant alerts"""
 
@@ -167,7 +197,7 @@ class InstantNewsMonitor:
                         
                         # Filter only real-time news (last 5 minutes)
                         recent_news = []
-                        current_time = datetime.now()
+                        current_time = self.get_current_time()
                         
                         for news in new_news:
                             # Check if news is really new (within last 5 minutes)
@@ -189,7 +219,7 @@ class InstantNewsMonitor:
 
                         
                         # Check if market hours or after hours
-                        now = datetime.now()
+                        now = self.get_current_time()
                         if 9 <= now.hour <= 15:  # Market hours - real-time alerts only
                             self.send_instant_alert(new_news)
                         # Off-market hours - don't send individual news
@@ -198,10 +228,13 @@ class InstantNewsMonitor:
                         seen_news.update(new_titles)
                         self.save_seen_news(seen_news)
                     else:
-
+                        pass
+                
+                # Send first message at 9:05 AM
+                self.send_first_message()
                 
                 # Different intervals based on market hours
-                now = datetime.now()
+                now = self.get_current_time()
                 if 9 <= now.hour <= 15:  # Market hours - check every 15 seconds
                     time.sleep(self.check_interval)
                 else:  # Off-market hours - send 2-hour summary
@@ -209,10 +242,9 @@ class InstantNewsMonitor:
                     time.sleep(7200)  # Check every 2 hours
                 
             except KeyboardInterrupt:
-    
                 break
             except Exception as e:
-
+                print(f"Error in news monitoring: {e}")
                 time.sleep(60)  # Wait 1 minute before retrying
 
 def start_instant_news_monitor():
