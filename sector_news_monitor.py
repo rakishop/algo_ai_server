@@ -81,7 +81,10 @@ class SectorNewsMonitor:
                 return False
             
             sector_name = sector.replace('_', ' ').title()
-            message = f"📊 {sector_name.upper()} SECTOR UPDATE - {datetime.now().strftime('%H:%M')}\n\n"
+            # Get IST time
+            utc_now = datetime.utcnow()
+            ist_time = utc_now + timedelta(hours=5, minutes=30)
+            message = f"📊 {sector_name.upper()} SECTOR UPDATE - {ist_time.strftime('%H:%M')}\n\n"
             
             # Add analyst reports
             sector_reports = [r for r in analyst_reports if r['sector'].lower() == sector_name.lower()]

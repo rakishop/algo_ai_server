@@ -162,7 +162,10 @@ class VolumeAlertSystem:
             return False
         
         try:
-            message = f"VOLUME SPIKE ALERT - {datetime.now().strftime('%H:%M')}\n\n"
+            # Get IST time
+            utc_now = datetime.utcnow()
+            ist_time = utc_now + timedelta(hours=5, minutes=30)
+            message = f"VOLUME SPIKE ALERT - {ist_time.strftime('%H:%M')}\n\n"
             message += f"HIGH VOLUME GAINERS ({len(volume_spikes)})\n\n"
             
             for i, spike in enumerate(volume_spikes[:5], 1):  # Top 5

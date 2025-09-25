@@ -3,7 +3,7 @@ import time
 import json
 import os
 from config import settings
-from datetime import datetime
+from datetime import datetime, timedelta
 from nse_client import NSEClient
 
 # File to store previous stocks
@@ -51,9 +51,14 @@ def find_significant_changes(current_stocks, previous_stocks):
     
     return result
 
+def get_ist_time():
+    """Get current IST time"""
+    utc_now = datetime.utcnow()
+    return utc_now + timedelta(hours=5, minutes=30)
+
 def is_market_open():
-    """Check if market is open (9:15 AM to 3:30 PM on weekdays)"""
-    now = datetime.now()
+    """Check if market is open (9:00 AM to 3:30 PM on weekdays)"""
+    now = get_ist_time()
     
     # Skip weekends
     if now.weekday() >= 5:  # Saturday=5, Sunday=6
@@ -103,7 +108,7 @@ def send_stock_alert():
         print(f"Significant stocks found: {len(significant_gainers)} gainers, {len(significant_losers)} losers")
         
         # Prepare message with new stocks only
-        message = f"NEW STOCK ALERT - {datetime.now().strftime('%H:%M')}\n\n"
+        message = f"NEW STOCK ALERT - {get_ist_time().strftime('%H:%M')}\n\n"
         
         if significant_gainers:
             message += f"TOP GAINERS ({len(significant_gainers)})\n"

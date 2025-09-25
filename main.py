@@ -812,7 +812,10 @@ async def send_telegram_alert():
         ai_losers = sorted(ai_losers, key=lambda x: x.get('breakout_score', x.get('momentum_score', 0)), reverse=True)[:4]
         
         # Create AI-powered message
-        message = f"🤖 AI MARKET ANALYSIS - {datetime.now().strftime('%H:%M')}\n\n"
+        # Get IST time
+        utc_now = datetime.utcnow()
+        ist_time = utc_now + timedelta(hours=5, minutes=30)
+        message = f"🤖 AI MARKET ANALYSIS - {ist_time.strftime('%H:%M')}\n\n"
         message += "📈 TOP 5 AI BREAKOUT GAINERS\n"
         for i, stock in enumerate(ai_gainers, 1):
             score = stock.get('breakout_score', stock.get('momentum_score', 0))
