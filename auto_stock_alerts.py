@@ -59,8 +59,8 @@ def is_market_open():
     if now.weekday() >= 5:  # Saturday=5, Sunday=6
         return False
     
-    # Market hours: 9:15 AM to 3:30 PM
-    market_start = now.replace(hour=9, minute=15, second=0, microsecond=0)
+    # Market hours: 9:00 AM to 3:30 PM
+    market_start = now.replace(hour=9, minute=0, second=0, microsecond=0)
     market_end = now.replace(hour=15, minute=30, second=0, microsecond=0)
     
     return market_start <= now <= market_end
