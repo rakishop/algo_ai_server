@@ -96,7 +96,7 @@ class EnhancedVolumeDetector:
         if df.empty:
             return []
         
-        current_hour = datetime.now().hour
+        current_hour = datetime.now().isoformat().hour
         
         for symbol, current_data in current_volumes.items():
             symbol_df = df[df['symbol'] == symbol].copy()

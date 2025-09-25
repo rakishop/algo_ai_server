@@ -56,11 +56,11 @@ def monitor_loop():
     print("🔍 Starting Telegram Scheduler Monitor")
     print("=" * 50)
     
-    last_check = datetime.now()
+    last_check = datetime.now().isoformat()
     
     while True:
         try:
-            current_time = datetime.now()
+            current_time = datetime.now().isoformat()
             print(f"\n⏰ Monitor check at {current_time.strftime('%H:%M:%S')}")
             
             # Check bot status
