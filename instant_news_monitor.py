@@ -1,7 +1,7 @@
 import time
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 from real_news_fetcher import RealNewsFetcher
 from news_telegram_alert import send_news_to_telegram
@@ -19,7 +19,12 @@ class InstantNewsMonitor:
     
     def get_current_time(self):
         """Get current time in IST"""
-        return datetime.now(self.ist)
+        utc_now = datetime.utcnow()
+        return utc_now + timedelta(hours=5, minutes=30)  # Convert UTC to IST
+    
+    def get_ist_time_str(self):
+        """Get IST time string for display"""
+        return self.get_current_time().strftime('%H:%M:%S')
         
     def load_seen_news(self):
         """Load previously seen news - clear old cache"""
@@ -82,7 +87,7 @@ class InstantNewsMonitor:
     def send_2hour_summary(self):
         """Send 2-hour news summary with full news and photos"""
         try:
-            current_time = self.get_current_time().replace(tzinfo=None)
+            current_time = self.get_current_time()
             
             # Check if 2 hours passed since last summary
             if self.last_summary_time and (current_time - self.last_summary_time).total_seconds() < 7200:
