@@ -82,7 +82,7 @@ class InstantNewsMonitor:
     def send_2hour_summary(self):
         """Send 2-hour news summary with full news and photos"""
         try:
-            current_time = datetime.now()
+            current_time = self.get_current_time().replace(tzinfo=None)
             
             # Check if 2 hours passed since last summary
             if self.last_summary_time and (current_time - self.last_summary_time).total_seconds() < 7200:
@@ -210,9 +210,17 @@ class InstantNewsMonitor:
                                     pass
                             
                             # If no timestamp or very recent (last 5 minutes), consider it new
-                            if not news_time or (current_time - news_time.replace(tzinfo=None)).total_seconds() <= 300:
+                            if not news_time:
                                 if news['title'] not in seen_news:
                                     recent_news.append(news)
+                            else:
+                                # Make both datetimes timezone-naive for comparison
+                                current_naive = current_time.replace(tzinfo=None)
+                                news_naive = news_time.replace(tzinfo=None) if news_time.tzinfo else news_time
+                                
+                                if (current_naive - news_naive).total_seconds() <= 300:
+                                    if news['title'] not in seen_news:
+                                        recent_news.append(news)
                         
                         new_news = recent_news
                         
