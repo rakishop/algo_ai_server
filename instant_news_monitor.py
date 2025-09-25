@@ -58,7 +58,7 @@ class InstantNewsMonitor:
                     source = news['source'].replace('_', ' ').title()
                     link = news.get('link', '')
                     
-                    message = f"🚨 BREAKING NEWS - {datetime.now().strftime('%H:%M')}\n\n"
+                    message = f"🚨 BREAKING NEWS - {self.get_current_time().strftime('%H:%M')}\n\n"
                     message += f"📰 {title}\n\n"
                     if content and content != title:
                         message += f"{content}\n\n"
@@ -105,7 +105,7 @@ class InstantNewsMonitor:
                 return False
             
             # Send header message
-            header_msg = f"📰 2-HOUR NEWS SUMMARY - {current_time.strftime('%H:%M')}\n\n📊 {len(recent_news)} news items"
+            header_msg = f"📰 2-HOUR NEWS SUMMARY - {self.get_current_time().strftime('%H:%M')}\n\n📊 {len(recent_news)} news items"
             
             url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage"
             data = {
