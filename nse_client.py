@@ -34,6 +34,24 @@ class NSEClient:
             pass
         return session
     
+    def get_quote_derivative(self, symbol: str) -> Dict[str, Any]:
+        """Fetch derivative quote data including lot size"""
+        session = self._get_fresh_session()
+        try:
+            response = session.get(
+                f"{self.base_url}/api/quote-derivative?symbol={symbol.upper()}",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+        finally:
+            session.close()
+    
     def get_52week_high_stocks(self) -> Dict[str, Any]:
         """Fetch 52-week high stock data"""
         session = self._get_fresh_session()
@@ -487,6 +505,42 @@ class NSEClient:
         try:
             response = session.get(
                 f"{self.base_url}/api/live-analysis-most-active-underlying",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+        finally:
+            session.close()
+    
+    def get_futures_master_quote(self) -> Dict[str, Any]:
+        """Fetch futures master quote data - all future stock symbols"""
+        session = self._get_fresh_session()
+        try:
+            response = session.get(
+                f"{self.base_url}/api/master-quote",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+        finally:
+            session.close()
+    
+    def get_historical_data(self, symbol: str, from_date: str, to_date: str) -> Dict[str, Any]:
+        """Fetch historical data for symbol"""
+        session = self._get_fresh_session()
+        try:
+            response = session.get(
+                f"{self.base_url}/api/historicalOR/cm/equity?symbol={symbol}&series=[%22EQ%22]&from={from_date}&to={to_date}",
                 timeout=10
             )
             response.raise_for_status()

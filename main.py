@@ -12,7 +12,7 @@ from routes.market_routes import create_market_routes
 from routes.derivatives_routes import create_derivatives_routes
 from routes.indices_routes import create_indices_routes
 from routes.equity_routes import create_equity_routes
-from routes.futures_analysis import create_futures_analysis_routes
+from routes.futures_analysis_fixed import create_futures_analysis_routes
 from option_chain_endpoint import create_option_chain_routes
 from charting_endpoint import create_charting_routes
 from websocket_streaming import manager
@@ -855,6 +855,14 @@ async def send_telegram_alert():
 def get_option_chain_info(symbol: str = "NIFTY"):
     """Get option chain contract info"""
     return nse_client.get_option_chain_info(symbol.upper())
+
+@app.get("/api/v1/futures/master-quote")
+def get_futures_master_quote():
+    """Get all future stock symbols from NSE master-quote API"""
+    try:
+        return nse_client.get_futures_master_quote()
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.get("/api/v1/ai/option-chain-analysis")
 def analyze_option_chain_legacy(

@@ -5,6 +5,9 @@ from sklearn.preprocessing import StandardScaler
 from typing import Dict, List, Any
 from utils.ai_risk_calculator import AIRiskCalculator
 import warnings
+import os
+import json
+from datetime import datetime, timedelta
 warnings.filterwarnings('ignore')
 
 class FuturesAnalyzer:
@@ -13,6 +16,9 @@ class FuturesAnalyzer:
         self.scaler = StandardScaler()
         self.is_trained = False
         self.risk_calculator = AIRiskCalculator()
+        self.training_data_dir = "futures_training_data"
+        os.makedirs(self.training_data_dir, exist_ok=True)
+        # Remove nse_client dependency - use AI risk calculator directly
     
     def extract_futures_data(self, oi_spurts_data: Dict) -> pd.DataFrame:
         """Extract only futures contracts from OI spurts data"""
@@ -150,6 +156,16 @@ class FuturesAnalyzer:
                 score += 10
                 action = "BUY" if row["pChange"] > 0 else "SELL"
             
+            # Pattern analysis enhancement
+            pattern_analysis = self.analyze_futures_pattern(row["symbol"], row.to_dict())
+            if "pattern_analysis" in pattern_analysis:
+                pattern_score = pattern_analysis["pattern_analysis"]["pattern_score"]
+                if pattern_score > 50:
+                    score += 20
+                    signals.extend(pattern_analysis["signals"])
+                elif pattern_score > 30:
+                    score += 10
+            
             # Risk assessment
             risk = "LOW" if score >= 70 else "MEDIUM" if score >= 50 else "HIGH"
             
@@ -157,6 +173,20 @@ class FuturesAnalyzer:
             sl_target = self.calculate_stop_loss_target(
                 row["symbol"], row["ltp"], action
             )
+            
+            # Handle error response from AI calculator
+            if "error" in sl_target:
+                sl_target = {
+                    "stop_loss": row["ltp"] * 0.97,  # 3% default
+                    "target": row["ltp"] * 1.06,     # 6% default
+                    "sl_percentage": 3.0,
+                    "target_percentage": 6.0,
+                    "risk_reward_ratio": 2.0,
+                    "atr": 0,
+                    "volatility": 0,
+                    "support": 0,
+                    "resistance": 0
+                }
             
             recommendations.append({
                 "symbol": row["symbol"],
@@ -175,6 +205,7 @@ class FuturesAnalyzer:
                 "signals": signals,
                 "expiry": row["expiryDate"],
                 "category": row["category"],
+                "pattern_analysis": pattern_analysis,
                 "trading_plan": {
                     "entry": f"{action} at ₹{row['ltp']}",
                     "stop_loss": f"₹{sl_target['stop_loss']} ({sl_target['sl_percentage']}%)",
@@ -184,6 +215,181 @@ class FuturesAnalyzer:
             })
         
         return sorted(recommendations, key=lambda x: x["ai_score"], reverse=True)
+    
+    def analyze_futures_pattern(self, symbol: str, current_data: Dict) -> Dict:
+        """Analyze futures pattern using current OI spurts data"""
+        try:
+            # Extract key metrics from current futures data
+            current_price = current_data.get("ltp", 0)
+            price_change = current_data.get("pChange", 0)
+            oi_change = current_data.get("pChangeInOI", 0)
+            volume = current_data.get("volume", 0)
+            category = current_data.get("category", "")
+            prev_close = current_data.get("prevClose", current_price)
+            
+            # Calculate pattern strength
+            pattern_score = 0
+            signals = []
+            
+            # OI and Price Pattern Analysis
+            if category == "Rise-in-OI-Rise":
+                pattern_score += 25
+                signals.append("Bullish: Fresh Long Build-up")
+                recommendation = "STRONG BUY"
+            elif category == "Slide-in-OI-Slide":
+                pattern_score += 25
+                signals.append("Bearish: Fresh Short Build-up")
+                recommendation = "STRONG SELL"
+            elif category == "Rise-in-OI-Slide":
+                pattern_score += 20
+                signals.append("Bearish: Short Build-up")
+                recommendation = "SELL"
+            elif category == "Slide-in-OI-Rise":
+                pattern_score += 15
+                signals.append("Bullish: Short Covering")
+                recommendation = "BUY"
+            else:
+                pattern_score += 5
+                recommendation = "HOLD"
+            
+            # Volume Analysis
+            if volume > 100000:
+                pattern_score += 20
+                signals.append("High Volume Confirmation")
+            elif volume > 50000:
+                pattern_score += 10
+                signals.append("Good Volume")
+            
+            # Price Momentum
+            if abs(price_change) > 3:
+                pattern_score += 15
+                signals.append(f"Strong Momentum: {price_change:.1f}%")
+            elif abs(price_change) > 1:
+                pattern_score += 8
+                signals.append(f"Good Momentum: {price_change:.1f}%")
+            
+            # OI Change Analysis
+            if abs(oi_change) > 30:
+                pattern_score += 15
+                signals.append(f"High OI Activity: {oi_change:.1f}%")
+            elif abs(oi_change) > 15:
+                pattern_score += 8
+                signals.append(f"Moderate OI Activity: {oi_change:.1f}%")
+            
+            # Risk Assessment
+            risk_level = "LOW" if pattern_score >= 60 else "MEDIUM" if pattern_score >= 40 else "HIGH"
+            confidence = min(95, pattern_score + 20)
+            
+            return {
+                "pattern_analysis": {
+                    "category": category,
+                    "pattern_score": pattern_score,
+                    "confidence": confidence,
+                    "recommendation": recommendation,
+                    "risk_level": risk_level
+                },
+                "signals": signals,
+                "metrics": {
+                    "price_change": price_change,
+                    "oi_change": oi_change,
+                    "volume": volume,
+                    "current_price": current_price
+                }
+            }
+            
+        except Exception as e:
+            return {"error": f"Pattern analysis error: {str(e)}"}
+    
+    def get_best_futures_bets(self, df: pd.DataFrame) -> List[Dict]:
+        """Get best futures bets based on OI spurts analysis - one per symbol"""
+        if df.empty:
+            return []
+        
+        # Group by symbol and get best contract per symbol
+        symbol_best = {}
+        
+        for _, row in df.iterrows():
+            pattern_analysis = self.analyze_futures_pattern(row["symbol"], row.to_dict())
+            
+            if "error" in pattern_analysis:
+                continue
+            
+            pattern = pattern_analysis["pattern_analysis"]
+            
+            # Only include high confidence trades
+            if pattern["confidence"] >= 60:
+                symbol = row["symbol"]
+                
+                # Calculate comprehensive score for this contract
+                volume_score = min(row["volume"] / 10000, 10)  # Volume factor (max 10)
+                oi_activity_score = min(abs(row["pChangeInOI"]) / 10, 5)  # OI activity factor (max 5)
+                momentum_score = min(abs(row["pChange"]) * 2, 10)  # Price momentum factor (max 10)
+                
+                # Days to expiry score (closer expiry gets higher score for short-term trades)
+                expiry_date = row["expiryDate"]
+                if "Sep" in expiry_date:
+                    expiry_score = 3  # Near expiry - higher urgency
+                else:
+                    expiry_score = 2  # Far expiry - more time
+                
+                # Comprehensive score combining all factors
+                total_score = (
+                    pattern["confidence"] * 0.4 +  # 40% confidence
+                    volume_score * 0.2 +           # 20% volume
+                    oi_activity_score * 0.2 +      # 20% OI activity
+                    momentum_score * 0.1 +         # 10% momentum
+                    expiry_score * 0.1              # 10% expiry timing
+                )
+                
+                # If symbol not seen or this contract has higher total score
+                if symbol not in symbol_best or total_score > symbol_best[symbol].get("total_score", 0):
+                    # Calculate AI-based levels
+                    sl_target = self.calculate_stop_loss_target(
+                        row["symbol"], row["ltp"], pattern["recommendation"]
+                    )
+                    
+                    if "error" in sl_target:
+                        sl_target = {
+                            "stop_loss": row["ltp"] * 0.97,
+                            "target": row["ltp"] * 1.06,
+                            "sl_percentage": 3.0,
+                            "target_percentage": 6.0,
+                            "risk_reward_ratio": 2.0
+                        }
+                    
+                    symbol_best[symbol] = {
+                        "symbol": row["symbol"],
+                        "recommendation": pattern["recommendation"],
+                        "confidence": pattern["confidence"],
+                        "pattern_score": pattern["pattern_score"],
+                        "risk_level": pattern["risk_level"],
+                        "current_price": row["ltp"],
+                        "price_change": row["pChange"],
+                        "oi_change": row["pChangeInOI"],
+                        "volume": row["volume"],
+                        "category": row["category"],
+                        "expiry": row["expiryDate"],
+                        "stop_loss": sl_target["stop_loss"],
+                        "target": sl_target["target"],
+                        "sl_percentage": sl_target["sl_percentage"],
+                        "target_percentage": sl_target["target_percentage"],
+                        "risk_reward_ratio": sl_target["risk_reward_ratio"],
+                        "signals": pattern_analysis["signals"],
+                        "total_score": total_score,
+                        "selection_reason": f"Best among expiries (Score: {total_score:.1f})",
+                        "trading_plan": {
+                            "action": pattern["recommendation"],
+                            "entry": f"₹{row['ltp']}",
+                            "stop_loss": f"₹{sl_target['stop_loss']} ({sl_target['sl_percentage']}%)",
+                            "target": f"₹{sl_target['target']} ({sl_target['target_percentage']}%)",
+                            "risk_reward": f"1:{sl_target['risk_reward_ratio']}",
+                            "rationale": f"{row['category']} with {pattern['confidence']}% confidence - {row['expiryDate']} expiry"
+                        }
+                    }
+        
+        # Convert to list and sort by total score
+        best_bets = list(symbol_best.values())
+        return sorted(best_bets, key=lambda x: x["total_score"], reverse=True)
     
     def train_ml_model(self, df: pd.DataFrame):
         """Train ML model for future predictions"""
@@ -233,6 +439,20 @@ class FuturesAnalyzer:
                 row["symbol"], row["ltp"], action
             )
             
+            # Handle error response from AI calculator
+            if "error" in sl_target:
+                sl_target = {
+                    "stop_loss": row["ltp"] * 0.97,  # 3% default
+                    "target": row["ltp"] * 1.06,     # 6% default
+                    "sl_percentage": 3.0,
+                    "target_percentage": 6.0,
+                    "risk_reward_ratio": 2.0,
+                    "atr": 0,
+                    "volatility": 0,
+                    "support": 0,
+                    "resistance": 0
+                }
+            
             # Determine risk based on confidence
             risk = "LOW" if confidence > 75 else "MEDIUM" if confidence > 60 else "HIGH"
             
@@ -262,6 +482,7 @@ def create_futures_analysis_routes(nse_client):
     
     router = APIRouter(prefix="/api/v1/futures", tags=["futures"])
     analyzer = FuturesAnalyzer()
+    # No need to set nse_client since we use AI risk calculator for historical data
     
     @router.get("/analysis")
     def get_futures_analysis():
@@ -275,17 +496,52 @@ def create_futures_analysis_routes(nse_client):
             
             analysis = analyzer.analyze_futures(df)
             recommendations = analyzer.generate_recommendations(df)
+            best_bets = analyzer.get_best_futures_bets(df)
+            
+            # Save futures data for training
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"futures_data_{timestamp}.json"
+            filepath = os.path.join(analyzer.training_data_dir, filename)
+            
+            with open(filepath, 'w') as f:
+                json.dump(df.to_dict('records'), f)
             
             # Train ML model
             training_result = analyzer.train_ml_model(df)
             ml_predictions = analyzer.predict_recommendations(df)
             
+            # Count total contracts in raw data
+            total_raw_contracts = 0
+            futures_count = 0
+            options_count = 0
+            
+            for category in oi_data.get("data", []):
+                for category_name, contracts in category.items():
+                    for contract in contracts:
+                        total_raw_contracts += 1
+                        if contract.get("instrumentType") in ["FUTSTK", "FUTIDX"]:
+                            futures_count += 1
+                        else:
+                            options_count += 1
+            
             return {
                 "futures_analysis": analysis,
                 "top_recommendations": recommendations[:10],
+                "best_bets": best_bets[:10],
                 "ml_predictions": ml_predictions[:10],
                 "training_info": training_result,
-                "total_contracts": len(df)
+                "total_contracts": len(df),
+                "data_breakdown": {
+                    "total_raw_contracts": total_raw_contracts,
+                    "futures_contracts": futures_count,
+                    "options_contracts": options_count,
+                    "futures_analyzed": len(df)
+                },
+                "best_bets_summary": {
+                    "strong_buy": len([bet for bet in best_bets if bet["recommendation"] == "STRONG BUY"]),
+                    "strong_sell": len([bet for bet in best_bets if bet["recommendation"] == "STRONG SELL"]),
+                    "high_confidence_count": len([bet for bet in best_bets if bet["confidence"] >= 80])
+                }
             }
             
         except Exception as e:
@@ -306,11 +562,24 @@ def create_futures_analysis_routes(nse_client):
             
             analysis = analyzer.analyze_futures(stock_futures)
             recommendations = analyzer.generate_recommendations(stock_futures)
+            best_bets = analyzer.get_best_futures_bets(stock_futures)
+            
+            # Train ML model on stock futures
+            training_result = analyzer.train_ml_model(stock_futures)
+            ml_predictions = analyzer.predict_recommendations(stock_futures)
             
             return {
                 "stock_futures_analysis": analysis,
-                "recommendations": recommendations,
-                "count": len(stock_futures)
+                "recommendations": recommendations[:10],
+                "best_bets": best_bets[:10],
+                "ml_predictions": ml_predictions[:10],
+                "training_info": training_result,
+                "count": len(stock_futures),
+                "best_bets_summary": {
+                    "strong_buy": len([bet for bet in best_bets if bet["recommendation"] == "STRONG BUY"]),
+                    "strong_sell": len([bet for bet in best_bets if bet["recommendation"] == "STRONG SELL"]),
+                    "high_confidence_count": len([bet for bet in best_bets if bet["confidence"] >= 80])
+                }
             }
             
         except Exception as e:
@@ -331,15 +600,30 @@ def create_futures_analysis_routes(nse_client):
             
             analysis = analyzer.analyze_futures(index_futures)
             recommendations = analyzer.generate_recommendations(index_futures)
+            best_bets = analyzer.get_best_futures_bets(index_futures)
+            
+            # Train ML model on index futures
+            training_result = analyzer.train_ml_model(index_futures)
+            ml_predictions = analyzer.predict_recommendations(index_futures)
             
             return {
                 "index_futures_analysis": analysis,
                 "recommendations": recommendations,
-                "count": len(index_futures)
+                "best_bets": best_bets,
+                "ml_predictions": ml_predictions,
+                "training_info": training_result,
+                "count": len(index_futures),
+                "best_bets_summary": {
+                    "strong_buy": len([bet for bet in best_bets if bet["recommendation"] == "STRONG BUY"]),
+                    "strong_sell": len([bet for bet in best_bets if bet["recommendation"] == "STRONG SELL"]),
+                    "high_confidence_count": len([bet for bet in best_bets if bet["confidence"] >= 80])
+                }
             }
             
         except Exception as e:
             return {"error": str(e)}
+    
+
     
     @router.get("/position-sizing")
     def calculate_position_sizing(
@@ -394,8 +678,64 @@ def create_futures_analysis_routes(nse_client):
                 "trading_plan": rec["trading_plan"],
                 "action": rec["action"],
                 "ai_score": rec["ai_score"],
-                "risk_level": rec["risk_level"]
+                "risk_level": rec["risk_level"],
+                "historical_analysis": rec.get("historical_analysis", {})
             }
+            
+        except Exception as e:
+            return {"error": str(e)}
+    
+    @router.get("/trend-analysis")
+    def get_trend_analysis():
+        """Analyze trends across all futures with historical data"""
+        try:
+            oi_data = nse_client.get_oi_spurts_contracts()
+            df = analyzer.extract_futures_data(oi_data)
+            
+            if df.empty:
+                return {"error": "No futures data found"}
+            
+            trend_analysis = {
+                "bullish_trends": [],
+                "bearish_trends": [],
+                "high_confidence": [],
+                "summary": {
+                    "total_analyzed": 0,
+                    "bullish_count": 0,
+                    "bearish_count": 0,
+                    "high_confidence_count": 0
+                }
+            }
+            
+            # Use existing recommendations for trend analysis
+            recommendations = analyzer.generate_recommendations(df)
+            
+            for rec in recommendations[:15]:  # Top 15 for trend analysis
+                analysis_data = {
+                    "symbol": rec["symbol"],
+                    "current_price": rec["current_price"],
+                    "price_change": rec["price_change_pct"],
+                    "volume": rec["volume"],
+                    "oi_change": rec["oi_change_pct"],
+                    "ai_score": rec["ai_score"],
+                    "recommendation": rec["action"],
+                    "signals": rec["signals"]
+                }
+                
+                trend_analysis["summary"]["total_analyzed"] += 1
+                
+                if rec["ai_score"] > 70:
+                    trend_analysis["high_confidence"].append(analysis_data)
+                    trend_analysis["summary"]["high_confidence_count"] += 1
+                
+                if rec["action"] == "BUY":
+                    trend_analysis["bullish_trends"].append(analysis_data)
+                    trend_analysis["summary"]["bullish_count"] += 1
+                elif rec["action"] == "SELL":
+                    trend_analysis["bearish_trends"].append(analysis_data)
+                    trend_analysis["summary"]["bearish_count"] += 1
+            
+            return trend_analysis
             
         except Exception as e:
             return {"error": str(e)}

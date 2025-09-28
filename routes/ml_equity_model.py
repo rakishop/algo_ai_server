@@ -291,7 +291,7 @@ class EquityMLModel:
         
         df['recommendation'] = df.apply(get_recommendation, axis=1)
         df['trend'] = df.apply(get_trend, axis=1)
-        df['risk_level'] = pd.cut(df['ai_score'], bins=[0, 33, 66, 100], labels=['HIGH', 'MEDIUM', 'LOW'])
+        df['risk_level'] = pd.cut(df['ai_score'], bins=[0, 33, 66, 100], labels=['HIGH', 'MEDIUM', 'LOW']).astype(str)
         
         # Top 3 recommendations
         top_recs = df.nlargest(3, 'ai_score')
@@ -328,7 +328,7 @@ class EquityMLModel:
                 'ai_score': float(round(row['ai_score'], 2)),
                 'recommendation': action,
                 'trend': str(row['trend']),
-                'risk_level': risk_level,
+                'risk_level': str(row['risk_level']) if pd.notna(row['risk_level']) else 'MEDIUM',
                 'volume_percentile': float(round(row['volume_rank'] * 100, 1)),
                 'year_high_proximity': float(round(row['year_high_proximity'], 3)),
                 'total_traded_volume': int(row['volume']),
