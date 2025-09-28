@@ -7,5 +7,14 @@
     "positions": [],
     "created_date": "2025-09-24T09:26:44.768795",
     "risk_tolerance": "MEDIUM"
+  },
+  "null": {
+    "portfolio_id": null,
+    "name": null,
+    "total_capital": null,
+    "available_cash": null,
+    "positions": [],
+    "created_date": "2025-09-28T10:59:01.973574",
+    "risk_tolerance": "MEDIUM"
   }
 }

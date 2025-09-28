@@ -273,6 +273,75 @@ ws.onmessage = function(event) {
 }
 ```
 
+## Indian Stock Indices Analysis
+
+### Get Index Constituents with 52-Week Data
+**Endpoint:** `GET /api/v1/indices/constituents/{index_name}`
+
+**Description:** Get all constituents of an Indian index with their current price and 52-week high/low data. This endpoint dynamically fetches data from NSE.
+
+**Supported Indices:** Any valid NSE index symbol (e.g., NIFTY 50, NIFTY BANK, NIFTY IT, etc.)
+
+**Example:** `GET /api/v1/indices/constituents/NIFTY%2050`
+
+**Response:**
+```json
+{
+    "index_name": "NIFTY 50",
+    "total_constituents": 50,
+    "constituents_data": [
+        {
+            "symbol": "RELIANCE",
+            "ltp": 2456.75,
+            "perChange": 2.15,
+            "high_52w": 2725.00,
+            "low_52w": 1850.00,
+            "volume": 15000000,
+            "value": 36850000000
+        }
+    ],
+    "stocks_at_52w_high": [
+        {
+            "symbol": "RELIANCE",
+            "ltp": 2456.75,
+            "perChange": 2.15,
+            "high_52w": 2456.75,
+            "low_52w": 1850.00,
+            "volume": 15000000,
+            "value": 36850000000
+        }
+    ],
+    "stocks_at_52w_low": [],
+    "high_count": 1,
+    "low_count": 0,
+    "analysis_time": "real-time"
+}
+```
+
+### Get Available Indices
+**Endpoint:** `GET /api/v1/indices/available`
+
+**Description:** Get list of all available NSE indices with their categories.
+
+**Response:**
+```json
+{
+    "available_indices": [
+        {
+            "index_name": "NIFTY 50",
+            "index_symbol": "NIFTY 50",
+            "category": "INDICES ELIGIBLE IN DERIVATIVES"
+        },
+        {
+            "index_name": "NIFTY BANK",
+            "index_symbol": "NIFTY BANK",
+            "category": "INDICES ELIGIBLE IN DERIVATIVES"
+        }
+    ],
+    "description": "Use index_symbol with /constituents/{index_name} endpoint"
+}
+```
+
 ## Technical Analysis
 
 ### Calculate All Indicators
@@ -345,13 +414,30 @@ ws.onmessage = function(event) {
 
 ## Enhanced AI Analysis
 
+## Usage Examples
+
+### Get Nifty 50 constituents with 52-week data:
+```
+GET /api/v1/indices/constituents/NIFTY%2050
+```
+
+### Get Bank Nifty constituents with 52-week data:
+```
+GET /api/v1/indices/constituents/NIFTY%20BANK
+```
+
+### Get all available indices:
+```
+GET /api/v1/indices/available
+```
+
 ### Enhanced Market Analysis
 **Endpoint:** `GET /api/v1/ai/enhanced-market-analysis`
 
 **Parameters:**
 - `analysis_type` (string, optional): "comprehensive" or "basic" (default: "comprehensive")
 - `risk_assessment` (bool, optional): Include risk assessment (default: true)
-- `limit` (int, optional): Number of stocks to analyze (default: 20)
+- `limit` (int, optional): Number of stocks to analyze (default: 20)cks to analyze (default: 20)
 
 **Response:**
 ```json
