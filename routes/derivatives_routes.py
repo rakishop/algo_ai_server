@@ -325,8 +325,45 @@ def create_derivatives_routes(nse_client):
             if "error" in enhanced_data:
                 return enhanced_data
             
-            # Use snapshot contracts for ML training and predictions
-            training_data = {"volume": {"data": enhanced_data["snapshot_contracts"]}}
+            # Get historical data for top options
+            from datetime import datetime, timedelta
+            to_date = datetime.now().strftime("%d-%m-%Y")
+            from_date = (datetime.now() - timedelta(days=30)).strftime("%d-%m-%Y")
+            
+            # Enhance with historical data for top contracts
+            enhanced_contracts = []
+            for contract in enhanced_data["snapshot_contracts"][:5]:
+                try:
+                    symbol = contract.get("underlying")
+                    option_type = "CE" if contract.get("optionType") == "Call" else "PE"
+                    strike_price = contract.get("strikePrice")
+                    expiry_date = contract.get("expiryDate")
+                    
+                    if not all([symbol, strike_price, expiry_date]):
+                        enhanced_contracts.append(contract)
+                        continue
+         
+                    hist_data = nse_client.get_options_historical_data(
+                        symbol, option_type, strike_price, expiry_date, from_date, to_date
+                    )
+                 
+                    if "error" not in hist_data and hist_data.get("data"):
+                        import pandas as pd
+                        df = pd.DataFrame(hist_data["data"])
+                        df['close'] = pd.to_numeric(df['FH_CLOSING_PRICE'], errors='coerce')
+                        df['volume'] = pd.to_numeric(df['FH_TOT_TRADED_QTY'], errors='coerce')
+                        
+                        contract["historical_analysis"] = {
+                            "avg_volume": float(df['volume'].mean()),
+                            "price_volatility": float(df['close'].std()),
+                            "trend": "BULLISH" if df['close'].iloc[0] > df['close'].mean() else "BEARISH"
+                        }
+                    
+                    enhanced_contracts.append(contract)
+                except:
+                    enhanced_contracts.append(contract)
+            
+            training_data = {"volume": {"data": enhanced_contracts}}
             
             # Auto-train model
             training_result = ml_model.train_with_historical_data(training_data)
@@ -353,25 +390,31 @@ def create_derivatives_routes(nse_client):
                         except:
                             days_to_expiry = 7
                         
-                        # Get AI-calculated levels
-                        ai_levels = risk_calculator.calculate_options_levels(
-                            underlying_symbol, current_price, action, 
-                            option_type, strike_price, max(days_to_expiry, 1)
-                        )
+                        # Calculate risk levels from historical data
+                        hist_analysis = rec.get("historical_analysis", {})
+                        volatility = hist_analysis.get("price_volatility", current_price * 0.1)
+                        
+                        # Risk calculation based on historical volatility
+                        stop_loss = current_price - (volatility * 2) if action == "BUY" else current_price + (volatility * 2)
+                        target = current_price + (volatility * 3) if action == "BUY" else current_price - (volatility * 3)
+                        
+                        sl_percentage = ((stop_loss - current_price) / current_price) * 100
+                        target_percentage = ((target - current_price) / current_price) * 100
+                        risk_reward_ratio = abs(target_percentage / sl_percentage) if sl_percentage != 0 else 2
                         
                         # Add to recommendation
                         rec.update({
-                            "stop_loss": ai_levels['stop_loss'],
-                            "target": ai_levels['target'],
-                            "sl_percentage": ai_levels['sl_percentage'],
-                            "target_percentage": ai_levels['target_percentage'],
-                            "risk_reward_ratio": ai_levels['risk_reward_ratio'],
+                            "stop_loss": round(stop_loss, 2),
+                            "target": round(target, 2),
+                            "sl_percentage": round(sl_percentage, 2),
+                            "target_percentage": round(target_percentage, 2),
+                            "risk_reward_ratio": round(risk_reward_ratio, 2),
                             "days_to_expiry": days_to_expiry,
                             "trading_plan": {
                                 "entry": f"{action} at ₹{current_price}",
-                                "stop_loss": f"₹{ai_levels['stop_loss']} ({ai_levels['sl_percentage']}%)",
-                                "target": f"₹{ai_levels['target']} ({ai_levels['target_percentage']}%)",
-                                "risk_reward": f"1:{ai_levels['risk_reward_ratio']}",
+                                "stop_loss": f"₹{stop_loss} ({sl_percentage}%)",
+                                "target": f"₹{target} ({target_percentage}%)",
+                                "risk_reward": f"1:{risk_reward_ratio}",
                                 "expiry": f"{days_to_expiry} days remaining"
                             }
                         })

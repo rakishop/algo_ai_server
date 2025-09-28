@@ -555,55 +555,81 @@ def create_futures_analysis_routes(nse_client):
                 to_date = datetime.now().strftime("%d-%m-%Y")
                 from_date = (datetime.now() - timedelta(days=180)).strftime("%d-%m-%Y")
                 
-                hist_data = nse_client.get_historical_data(symbol, from_date, to_date)
-                if "error" in hist_data or not hist_data.get("data"):
-                    return {"error": f"Could not fetch historical data for {symbol}"}
+                # For indices, use quote-derivative API instead of historical
+                if symbol in ["NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY"]:
+                    quote_data = nse_client.get_quote_derivative(symbol)
+                    if "error" in quote_data:
+                        return {"error": f"Could not fetch data for {symbol}"}
+                    
+                    stock_data = quote_data["stocks"][0]
+                    metadata = stock_data["metadata"]
+                    current_price = metadata["lastPrice"]
+                    price_change = ((current_price - metadata["prevClose"]) / metadata["prevClose"]) * 100
+                    
+                    volume = 0
+                    try:
+                        volume = int(stock_data["marketDeptOrderBook"]["tradeInfo"].get("totalTradedVolume", 0))
+                    except:
+                        volume = 0
+                    
+                    best_contract = {
+                        "symbol": symbol,
+                        "ltp": float(current_price),
+                        "pChange": float(price_change),
+                        "pChangeInOI": 0,
+                        "volume": volume,
+                        "category": "Index Futures"
+                    }
+                else:
+                    hist_data = nse_client.get_historical_data(symbol, from_date, to_date)
+                    if "error" in hist_data or not hist_data.get("data"):
+                        return {"error": f"Could not fetch historical data for {symbol}"}
                 
-                # Analyze historical data with pandas
-                import pandas as pd
-                df = pd.DataFrame(hist_data["data"])
-                latest = df.iloc[0]
-                
-                # Calculate technical indicators
-                df['close'] = pd.to_numeric(df['CH_CLOSING_PRICE'], errors='coerce')
-                df['volume'] = pd.to_numeric(df['CH_TOT_TRADED_QTY'], errors='coerce')
-                df['VWAP'] = pd.to_numeric(df['VWAP'], errors='coerce')
-                
-                # Drop NaN values
-                df = df.dropna(subset=['close', 'volume', 'VWAP'])
-                
-                sma_5 = df['close'].head(5).mean()
-                sma_20 = df['close'].head(20).mean()
-                avg_volume = df['volume'].head(20).mean()
-                
-                current_price = latest["CH_LAST_TRADED_PRICE"]
-                price_change = ((current_price - latest["CH_PREVIOUS_CLS_PRICE"]) / latest["CH_PREVIOUS_CLS_PRICE"]) * 100
-                
-                # Generate signals
-                signals = []
-                if current_price > sma_5 > sma_20:
-                    signals.append("Bullish Trend")
-                elif current_price < sma_5 < sma_20:
-                    signals.append("Bearish Trend")
-                
-                if latest["CH_TOT_TRADED_QTY"] > avg_volume * 1.5:
-                    signals.append("High Volume")
-                
-                best_contract = {
-                    "symbol": symbol,
-                    "ltp": float(current_price),
-                    "pChange": float(price_change),
-                    "pChangeInOI": 0,
-                    "volume": int(latest["CH_TOT_TRADED_QTY"]),
-                    "category": "Historical Analysis",
-                    "high": float(latest["CH_TRADE_HIGH_PRICE"]),
-                    "low": float(latest["CH_TRADE_LOW_PRICE"]),
-                    "sma_5": float(sma_5),
-                    "sma_20": float(sma_20),
-                    "signals": signals,
-                    "week_52_high": float(latest["CH_52WEEK_HIGH_PRICE"]),
-                    "week_52_low": float(latest["CH_52WEEK_LOW_PRICE"])
-                }
+                    # Analyze historical data with pandas
+                    import pandas as pd
+                    df = pd.DataFrame(hist_data["data"])
+                    latest = df.iloc[0]
+                    
+                    # Calculate technical indicators
+                    df['close'] = pd.to_numeric(df['CH_CLOSING_PRICE'], errors='coerce')
+                    df['volume'] = pd.to_numeric(df['CH_TOT_TRADED_QTY'], errors='coerce')
+                    df['VWAP'] = pd.to_numeric(df['VWAP'], errors='coerce')
+                    
+                    # Drop NaN values
+                    df = df.dropna(subset=['close', 'volume', 'VWAP'])
+                    
+                    sma_5 = df['close'].head(5).mean()
+                    sma_20 = df['close'].head(20).mean()
+                    avg_volume = df['volume'].head(20).mean()
+                    
+                    current_price = latest["CH_LAST_TRADED_PRICE"]
+                    price_change = ((current_price - latest["CH_PREVIOUS_CLS_PRICE"]) / latest["CH_PREVIOUS_CLS_PRICE"]) * 100
+                    
+                    # Generate signals
+                    signals = []
+                    if current_price > sma_5 > sma_20:
+                        signals.append("Bullish Trend")
+                    elif current_price < sma_5 < sma_20:
+                        signals.append("Bearish Trend")
+                    
+                    if latest["CH_TOT_TRADED_QTY"] > avg_volume * 1.5:
+                        signals.append("High Volume")
+                    
+                    best_contract = {
+                        "symbol": symbol,
+                        "ltp": float(current_price),
+                        "pChange": float(price_change),
+                        "pChangeInOI": 0,
+                        "volume": int(latest["CH_TOT_TRADED_QTY"]),
+                        "category": "Historical Analysis",
+                        "high": float(latest["CH_TRADE_HIGH_PRICE"]),
+                        "low": float(latest["CH_TRADE_LOW_PRICE"]),
+                        "sma_5": float(sma_5),
+                        "sma_20": float(sma_20),
+                        "signals": signals,
+                        "week_52_high": float(latest["CH_52WEEK_HIGH_PRICE"]),
+                        "week_52_low": float(latest["CH_52WEEK_LOW_PRICE"])
+                    }
             else:
                 best_contract = symbol_data.iloc[0]
                 current_price = best_contract["ltp"]

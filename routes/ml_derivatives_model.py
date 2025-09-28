@@ -177,7 +177,7 @@ class DerivativesMLModel:
         
         recommendations = []
         for _, row in top_recs.iterrows():
-            recommendations.append({
+            rec = {
                 'identifier': str(row['identifier']),
                 'underlying': str(row['underlying']),
                 'option_type': str(row['optionType']),
@@ -188,8 +188,16 @@ class DerivativesMLModel:
                 'risk_level': str(row['risk_level']),
                 'volume_percentile': float(round(row['volume_rank'] * 100, 1)),
                 'price_change': float(row['pChange']),
-                'liquidity_score': float(row['liquidity_score'])
-            })
+                'liquidity_score': float(row['liquidity_score']),
+                'last_price': float(row['lastPrice']),
+                'expiry_date': str(row.get('expiryDate', ''))
+            }
+            
+            # Add historical analysis if available
+            if 'historical_analysis' in row and pd.notna(row['historical_analysis']):
+                rec['historical_analysis'] = row['historical_analysis']
+            
+            recommendations.append(rec)
         
         # Market analysis using pandas
         market_analysis = {
@@ -207,8 +215,18 @@ class DerivativesMLModel:
         best_call = df[df['optionType'] == 'Call'].nlargest(1, 'ai_score')
         best_put = df[df['optionType'] == 'Put'].nlargest(1, 'ai_score')
         
+        # Add historical analysis to primary recommendation
+        primary_rec = recommendations[0] if recommendations else None
+        if primary_rec:
+            # Find matching contract in original data for historical analysis
+            for contract in contracts:
+                if contract.get('identifier') == primary_rec['identifier']:
+                    if 'historical_analysis' in contract:
+                        primary_rec['historical_analysis'] = contract['historical_analysis']
+                    break
+        
         best_trades = {
-            'primary_recommendation': recommendations[0] if recommendations else None,
+            'primary_recommendation': primary_rec,
             'best_call_trade': {
                 'strike': float(best_call.iloc[0]['strikePrice']) if not best_call.empty else None,
                 'action': str(best_call.iloc[0]['recommendation']) if not best_call.empty else None,

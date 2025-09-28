@@ -864,6 +864,64 @@ def get_futures_master_quote():
     except Exception as e:
         return {"error": str(e)}
 
+@app.get("/api/v1/options/historical")
+def get_options_historical(
+    symbol: str = "NIFTY",
+    option_type: str = "CE", 
+    strike_price: float = 25000.0,
+    expiry_date: str = "30-Sep-2025",
+    days: int = 90
+):
+    """Get options historical data with AI analysis"""
+    try:
+        from datetime import datetime, timedelta
+        to_date = datetime.now().strftime("%d-%m-%Y")
+        from_date = (datetime.now() - timedelta(days=days)).strftime("%d-%m-%Y")
+        
+        hist_data = nse_client.get_options_historical_data(symbol, option_type, strike_price, expiry_date, from_date, to_date)
+        if "error" in hist_data:
+            return hist_data
+        
+        # AI analysis with pandas
+        import pandas as pd
+        df = pd.DataFrame(hist_data["data"])
+        
+        df['close'] = pd.to_numeric(df['FH_CLOSING_PRICE'], errors='coerce')
+        df['volume'] = pd.to_numeric(df['FH_TOT_TRADED_QTY'], errors='coerce')
+        df['oi'] = pd.to_numeric(df['FH_OPEN_INT'], errors='coerce')
+        df['underlying'] = pd.to_numeric(df['FH_UNDERLYING_VALUE'], errors='coerce')
+        
+        # Technical indicators
+        df['iv_estimate'] = (df['close'] / df['underlying']) * 100
+        df['moneyness'] = df['underlying'] / strike_price
+        df['oi_change_pct'] = df['FH_CHANGE_IN_OI'] / df['oi'] * 100
+        
+        latest = df.iloc[0]
+        
+        return {
+            "symbol": symbol,
+            "option_type": option_type,
+            "strike_price": strike_price,
+            "expiry_date": expiry_date,
+            "current_data": {
+                "premium": float(latest['close']),
+                "volume": int(latest['volume']),
+                "oi": int(latest['oi']),
+                "underlying_price": float(latest['underlying']),
+                "moneyness": float(latest['moneyness']),
+                "iv_estimate": float(latest['iv_estimate'])
+            },
+            "analysis": {
+                "avg_volume": float(df['volume'].mean()),
+                "avg_oi": float(df['oi'].mean()),
+                "price_volatility": float(df['close'].std()),
+                "trend": "BULLISH" if latest['close'] > df['close'].mean() else "BEARISH"
+            },
+            "total_records": len(df)
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
 @app.get("/api/v1/ai/option-chain-analysis")
 def analyze_option_chain_legacy(
     symbol: str = "NIFTY",

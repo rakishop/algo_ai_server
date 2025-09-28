@@ -552,3 +552,21 @@ class NSEClient:
             return {"error": str(e), "data": None}
         finally:
             session.close()
+    
+    def get_options_historical_data(self, symbol: str, option_type: str, strike_price: float, expiry_date: str, from_date: str, to_date: str) -> Dict[str, Any]:
+        """Fetch options historical data"""
+        session = self._get_fresh_session()
+        try:
+            response = session.get(
+                f"{self.base_url}/api/historicalOR/fo/derivatives?from={from_date}&to={to_date}&optionType={option_type}&strikePrice={strike_price}&expiryDate={expiry_date}&instrumentType=OPTIDX&symbol={symbol}",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+        finally:
+            session.close()
