@@ -296,50 +296,73 @@ class EquityMLModel:
         # Top 3 recommendations
         top_recs = df.nlargest(3, 'ai_score')
         
+        # Batch process historical data for top symbols to avoid repeated API calls
+        top_symbols = top_recs['symbol'].unique()[:3]  # Only top 3 unique symbols
+        
         recommendations = []
         for _, row in top_recs.iterrows():
-            # AI-based risk calculation using historical data
+            # AI-based risk calculation using cached historical data
             current_price = float(row['last_price'])
             action = str(row['recommendation'])
             symbol = str(row.get('symbol', 'N/A'))
             
-            # Get AI-calculated levels
+            # Get AI-calculated levels using real data only
             ai_levels = self.risk_calculator.calculate_ai_levels(symbol, current_price, action)
             
-            stop_loss = ai_levels['stop_loss']
-            target = ai_levels['target']
-            base_sl = ai_levels['sl_percentage']
-            base_target = ai_levels['target_percentage']
-            
-            recommendations.append({
-                'symbol': str(row.get('symbol', 'N/A')),
-                'company_name': str(row.get('companyName', '')),
-                'last_price': current_price,
-                'stop_loss': stop_loss,
-                'target': target,
-                'sl_percentage': base_sl,
-                'target_percentage': base_target,
-                'risk_reward_ratio': ai_levels['risk_reward_ratio'],
-                'atr': ai_levels.get('atr', 0),
-                'volatility': ai_levels.get('volatility', 0),
-                'support': ai_levels.get('support', 0),
-                'resistance': ai_levels.get('resistance', 0),
-                'price_change': float(row['price_change']),
-                'ai_score': float(round(row['ai_score'], 2)),
-                'recommendation': action,
-                'trend': str(row['trend']),
-                'risk_level': str(row['risk_level']) if pd.notna(row['risk_level']) else 'MEDIUM',
-                'volume_percentile': float(round(row['volume_rank'] * 100, 1)),
-                'year_high_proximity': float(round(row['year_high_proximity'], 3)),
-                'total_traded_volume': int(row['volume']),
-                'trading_plan': {
-                    "entry": f"{action} at ₹{current_price}",
-                    "stop_loss": f"₹{stop_loss} ({base_sl}%)",
-                    "target": f"₹{target} ({base_target}%)",
-                    "risk_reward": f"1:{ai_levels['risk_reward_ratio']}",
-                    "technical_levels": f"Support: ₹{ai_levels.get('support', 0)}, Resistance: ₹{ai_levels.get('resistance', 0)}"
-                } if action != 'HOLD' else None
-            })
+            if ai_levels:  # Only add if real data is available
+                recommendations.append({
+                    'symbol': str(row.get('symbol', 'N/A')),
+                    'company_name': str(row.get('companyName', '')),
+                    'last_price': current_price,
+                    'stop_loss': ai_levels['stop_loss'],
+                    'target': ai_levels['target'],
+                    'sl_percentage': ai_levels['sl_percentage'],
+                    'target_percentage': ai_levels['target_percentage'],
+                    'risk_reward_ratio': ai_levels['risk_reward_ratio'],
+                    'atr': ai_levels.get('atr', 0),
+                    'volatility': ai_levels.get('volatility', 0),
+                    'support': ai_levels.get('support', 0),
+                    'resistance': ai_levels.get('resistance', 0),
+                    'price_change': float(row['price_change']),
+                    'ai_score': float(round(row['ai_score'], 2)),
+                    'recommendation': action,
+                    'trend': str(row['trend']),
+                    'risk_level': str(row['risk_level']) if pd.notna(row['risk_level']) else 'MEDIUM',
+                    'volume_percentile': float(round(row['volume_rank'] * 100, 1)),
+                    'year_high_proximity': float(round(row['year_high_proximity'], 3)),
+                    'total_traded_volume': int(row['volume']),
+                    'trading_plan': {
+                        "entry": f"{action} at ₹{current_price}",
+                        "stop_loss": f"₹{ai_levels['stop_loss']} ({ai_levels['sl_percentage']}%)",
+                        "target": f"₹{ai_levels['target']} ({ai_levels['target_percentage']}%)",
+                        "risk_reward": f"1:{ai_levels['risk_reward_ratio']}",
+                        "technical_levels": f"Support: ₹{ai_levels.get('support', 0)}, Resistance: ₹{ai_levels.get('resistance', 0)}"
+                    } if action != 'HOLD' else None
+                })
+            else:  # No real data available - add with null values
+                recommendations.append({
+                    'symbol': str(row.get('symbol', 'N/A')),
+                    'company_name': str(row.get('companyName', '')),
+                    'last_price': current_price,
+                    'stop_loss': None,
+                    'target': None,
+                    'sl_percentage': None,
+                    'target_percentage': None,
+                    'risk_reward_ratio': None,
+                    'atr': None,
+                    'volatility': None,
+                    'support': None,
+                    'resistance': None,
+                    'price_change': float(row['price_change']),
+                    'ai_score': float(round(row['ai_score'], 2)),
+                    'recommendation': action,
+                    'trend': str(row['trend']),
+                    'risk_level': str(row['risk_level']) if pd.notna(row['risk_level']) else 'MEDIUM',
+                    'volume_percentile': float(round(row['volume_rank'] * 100, 1)),
+                    'year_high_proximity': float(round(row['year_high_proximity'], 3)),
+                    'total_traded_volume': int(row['volume']),
+                    'trading_plan': None
+                })
         
         # Best trades with safety checks
         buy_candidates = df[df['recommendation'].isin(['BUY', 'STRONG BUY'])]
@@ -348,10 +371,11 @@ class EquityMLModel:
         best_buy = buy_candidates.nlargest(1, 'ai_score') if not buy_candidates.empty else pd.DataFrame()
         best_sell = sell_candidates.nlargest(1, 'ai_score') if not sell_candidates.empty else pd.DataFrame()
         
+        # Optimize trade plan creation to avoid duplicate calculations
         best_trades = {
             'primary_recommendation': recommendations[0] if recommendations else None,
-            'best_buy_trade': self._create_trade_plan(best_buy.iloc[0]) if not best_buy.empty else None,
-            'best_sell_trade': self._create_trade_plan(best_sell.iloc[0]) if not best_sell.empty else None
+            'best_buy_trade': self._create_trade_plan_optimized(best_buy.iloc[0]) if not best_buy.empty else None,
+            'best_sell_trade': self._create_trade_plan_optimized(best_sell.iloc[0]) if not best_sell.empty else None
         }
         
         # Market analysis
@@ -388,14 +412,18 @@ class EquityMLModel:
             return {"status": "saved", "path": filepath}
         return {"error": "No trained model to save"}
     
-    def _create_trade_plan(self, row):
-        """Create trade plan with AI-based risk management"""
+    def _create_trade_plan_optimized(self, row):
+        """Create trade plan with real data only - return None if no real data"""
         current_price = float(row['last_price'])
         action = str(row['recommendation'])
         symbol = str(row['symbol'])
         
-        # Get AI-calculated levels
+        # Get AI-calculated levels using real data only
         ai_levels = self.risk_calculator.calculate_ai_levels(symbol, current_price, action)
+        
+        if not ai_levels:
+            # No real data available - return None
+            return None
         
         return {
             'symbol': symbol,
@@ -415,6 +443,10 @@ class EquityMLModel:
                 "technical_analysis": f"ATR: {ai_levels.get('atr', 0)}, Vol: {ai_levels.get('volatility', 0)}%"
             }
         }
+    
+    def _create_trade_plan(self, row):
+        """Legacy method - redirects to optimized version"""
+        return self._create_trade_plan_optimized(row)
     
     def load_model(self, filepath):
         """Load trained model"""

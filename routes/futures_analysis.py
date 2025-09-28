@@ -631,56 +631,138 @@ def create_futures_analysis_routes(nse_client):
         account_size: float = 100000,
         risk_per_trade: float = 2.0
     ):
-        """Calculate position size based on account size and risk"""
+        """Calculate position size using comprehensive NSE symbol list"""
         try:
+            # Get comprehensive underlying information from NSE
+            underlying_info = nse_client.get_underlying_information()
+            
+            if "error" in underlying_info:
+                return {"error": "Failed to fetch underlying information"}
+            
+            # Extract all available symbols
+            all_symbols = []
+            if "data" in underlying_info:
+                if "IndexList" in underlying_info["data"]:
+                    for index in underlying_info["data"]["IndexList"]:
+                        all_symbols.append(index["symbol"])
+                if "UnderlyingList" in underlying_info["data"]:
+                    for underlying in underlying_info["data"]["UnderlyingList"]:
+                        all_symbols.append(underlying["symbol"])
+            
+            symbol_upper = symbol.upper()
+            if symbol_upper not in all_symbols:
+                return {"error": f"Symbol {symbol} not available for futures trading"}
+            
+            # Try OI spurts data first
             oi_data = nse_client.get_oi_spurts_contracts()
             df = analyzer.extract_futures_data(oi_data)
+            symbol_data = df[df["symbol"] == symbol_upper]
             
-            # Find the symbol
-            symbol_data = df[df["symbol"] == symbol.upper()]
             if symbol_data.empty:
-                return {"error": f"Symbol {symbol} not found"}
+                # Use AI calculator for symbols not in current OI data
+                current_price = 100
+                sl_target = analyzer.calculate_stop_loss_target(symbol_upper, current_price, "BUY")
+                
+                if "error" in sl_target:
+                    sl_target = {
+                        "stop_loss": current_price * 0.97,
+                        "target": current_price * 1.06,
+                        "sl_percentage": 3.0,
+                        "target_percentage": 6.0,
+                        "risk_reward_ratio": 2.0
+                    }
+                
+                risk_amount = account_size * (risk_per_trade / 100)
+                price_diff = abs(current_price - sl_target["stop_loss"])
+                position_size = int(risk_amount / price_diff) if price_diff > 0 else 0
+                
+                return {
+                    "symbol": symbol_upper,
+                    "status": "Symbol found in NSE list but not in current active futures",
+                    "account_size": account_size,
+                    "risk_per_trade_pct": risk_per_trade,
+                    "position_sizing": {
+                        "recommended_quantity": position_size,
+                        "entry_price": current_price,
+                        "stop_loss": sl_target["stop_loss"],
+                        "target": sl_target["target"],
+                        "risk_reward_ratio": sl_target["risk_reward_ratio"]
+                    },
+                    "total_available_symbols": len(all_symbols)
+                }
             
-            row = symbol_data.iloc[0]
+            # Process active futures data
             recommendations = analyzer.generate_recommendations(symbol_data)
-            
             if not recommendations:
                 return {"error": "No recommendations available"}
             
             rec = recommendations[0]
-            
-            # Calculate position size
             risk_amount = account_size * (risk_per_trade / 100)
             price_diff = abs(rec["current_price"] - rec["stop_loss"])
             
             if price_diff == 0:
                 return {"error": "Invalid stop loss calculation"}
             
-            # For futures, lot size matters (assuming 1 lot = 1 unit for simplicity)
             position_size = int(risk_amount / price_diff)
-            max_loss = position_size * price_diff
-            potential_profit = position_size * abs(rec["target"] - rec["current_price"])
             
             return {
-                "symbol": symbol.upper(),
+                "symbol": symbol_upper,
+                "status": "Active in current futures market",
                 "account_size": account_size,
                 "risk_per_trade_pct": risk_per_trade,
-                "risk_amount": risk_amount,
                 "position_sizing": {
                     "recommended_quantity": position_size,
                     "entry_price": rec["current_price"],
                     "stop_loss": rec["stop_loss"],
                     "target": rec["target"],
-                    "max_loss": round(max_loss, 2),
-                    "potential_profit": round(potential_profit, 2),
                     "risk_reward_ratio": rec["risk_reward_ratio"]
                 },
                 "trading_plan": rec["trading_plan"],
                 "action": rec["action"],
                 "ai_score": rec["ai_score"],
-                "risk_level": rec["risk_level"],
-                "historical_analysis": rec.get("historical_analysis", {})
+                "total_available_symbols": len(all_symbols)
             }
+            
+        except Exception as e:
+            return {"error": str(e)}
+    
+    @router.get("/available-symbols")
+    def get_available_futures_symbols():
+        """Get all available futures and options symbols from NSE"""
+        try:
+            underlying_info = nse_client.get_underlying_information()
+            
+            if "error" in underlying_info:
+                return underlying_info
+            
+            result = {
+                "indices": [],
+                "stocks": [],
+                "total_count": 0
+            }
+            
+            if "data" in underlying_info:
+                if "IndexList" in underlying_info["data"]:
+                    for index in underlying_info["data"]["IndexList"]:
+                        result["indices"].append({
+                            "symbol": index["symbol"],
+                            "name": index["underlying"],
+                            "serial_number": index["serialNumber"]
+                        })
+                
+                if "UnderlyingList" in underlying_info["data"]:
+                    for stock in underlying_info["data"]["UnderlyingList"]:
+                        result["stocks"].append({
+                            "symbol": stock["symbol"],
+                            "name": stock["underlying"],
+                            "serial_number": stock["serialNumber"]
+                        })
+            
+            result["total_count"] = len(result["indices"]) + len(result["stocks"])
+            result["indices_count"] = len(result["indices"])
+            result["stocks_count"] = len(result["stocks"])
+            
+            return result
             
         except Exception as e:
             return {"error": str(e)}

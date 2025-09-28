@@ -19,23 +19,59 @@ class AIRiskCalculator:
         }
         os.makedirs('option_chain_data', exist_ok=True)
         
+        # Add caching for performance
+        self._data_cache = {}
+        self._cache_timeout = 300  # 5 minutes
+        
+    def _get_cached_historical_data(self, cache_key, symbol, days_back):
+        """Get cached historical data or fetch if not available"""
+        current_time = time.time()
+        
+        # Check cache first
+        if cache_key in self._data_cache:
+            cached_data, timestamp = self._data_cache[cache_key]
+            if (current_time - timestamp) < self._cache_timeout:
+                return cached_data
+        
+        # Fetch new data with proper session handling
+        hist_data = None
+        try:
+            if symbol in ['NIFTY', 'BANKNIFTY', 'FINNIFTY']:
+                hist_data = self.get_futures_historical_data(symbol, days_back)
+            else:
+                hist_data = self.get_stock_historical_data(symbol, days_back)
+        except Exception as e:
+            print(f"Historical data fetch failed for {symbol}: {e}")
+            return None
+        
+        # Cache the result only if valid
+        if hist_data and hist_data.get("close"):
+            self._data_cache[cache_key] = (hist_data, current_time)
+            return hist_data
+        
+        return None
+        
     def get_futures_historical_data(self, symbol, days_back=60):
         """Get futures historical data from NSE API"""
         try:
-            # Create session with proper headers
+            # Create fresh session with updated headers
             session = requests.Session()
             session.headers.update({
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Accept': 'application/json, text/plain, */*',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'Connection': 'keep-alive',
-                'Referer': 'https://www.nseindia.com/',
-                'X-Requested-With': 'XMLHttpRequest'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
+                'Accept': '*/*',
+                'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
+                'Referer': 'https://www.nseindia.com/market-data/live-equity-market',
+                'sec-ch-ua': '"Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': '"Windows"',
+                'sec-fetch-dest': 'empty',
+                'sec-fetch-mode': 'cors',
+                'sec-fetch-site': 'same-origin',
+                'Cache-Control': 'no-cache'
             })
             
-            # First establish session
-            session.get('https://www.nseindia.com', timeout=10)
+            # Establish session with proper page
+            session.get('https://www.nseindia.com/market-data/live-equity-market', timeout=15)
             
             to_date = datetime.now()
             from_date = to_date - timedelta(days=days_back)
@@ -53,10 +89,14 @@ class AIRiskCalculator:
                 'symbol': symbol
             }
             
-            response = session.get(self.futures_url, params=params, timeout=10)
+            response = session.get(self.futures_url, params=params, timeout=15)
             
             if response.status_code != 200:
                 print(f"NSE Futures API returned {response.status_code} for {symbol}")
+                return None
+            
+            if not response.text.strip():
+                print(f"Empty response from NSE Futures API for {symbol}")
                 return None
                 
             data = response.json()
@@ -128,11 +168,20 @@ class AIRiskCalculator:
     
     def calculate_atr(self, high, low, close, period=14):
         """Calculate Average True Range"""
-        if len(high) < period + 1:
-            return np.mean(high) - np.mean(low)
+        if len(high) < 2 or len(low) < 2 or len(close) < 2:
+            return abs(np.mean(high) - np.mean(low)) if len(high) > 0 else 0
+        
+        # Ensure all arrays have same length
+        min_len = min(len(high), len(low), len(close))
+        high = high[:min_len]
+        low = low[:min_len]
+        close = close[:min_len]
+        
+        if min_len < period + 1:
+            return abs(np.mean(high) - np.mean(low))
         
         tr_list = []
-        for i in range(1, len(high)):
+        for i in range(1, min_len):
             tr = max(
                 high[i] - low[i],
                 abs(high[i] - close[i-1]),
@@ -140,13 +189,21 @@ class AIRiskCalculator:
             )
             tr_list.append(tr)
         
-        return np.mean(tr_list[-period:])
+        return np.mean(tr_list[-period:]) if tr_list else 0
     
     def find_support_resistance(self, high, low, close):
         """Find key support and resistance levels"""
+        if len(close) < 1:
+            return 0, 0
+        
         if len(close) < 10:
             current = close[-1]
             return current * 0.95, current * 1.05
+        
+        # Ensure arrays have same length
+        min_len = min(len(high), len(low), len(close))
+        high = high[:min_len]
+        low = low[:min_len]
         
         # Simple pivot points
         recent_high = max(high[-20:]) if len(high) >= 20 else max(high)
@@ -155,65 +212,47 @@ class AIRiskCalculator:
         return recent_low, recent_high
     
     def calculate_ai_levels(self, symbol, current_price, action):
-        """Calculate AI-based stop loss and target using historical data"""
-        # Try different data sources based on symbol type
-        hist_data = None
-        
-        # For indices, try futures data first
-        if symbol in ['NIFTY', 'BANKNIFTY', 'FINNIFTY']:
-            hist_data = self.get_futures_historical_data(symbol, days_back=60)
-        else:
-            # For stocks, try NSE stock APIs first
-            hist_data = self.get_stock_historical_data(symbol, days_back=60)
-        
-        # Fallback to chart data if no data found
-        if not hist_data:
-            hist_data = self.get_historical_data(symbol, period="D", interval=1, days_back=60)
+        """Calculate AI-based stop loss and target using real historical data only"""
+        # Use cached historical data to avoid repeated API calls
+        cache_key = f"hist_data_{symbol}_60d"
+        hist_data = self._get_cached_historical_data(cache_key, symbol, 60)
         
         if not hist_data or not hist_data["close"]:
-            return {"error": "No historical data available for analysis"}
+            # Return null if no real data available
+            return None
         
         close_prices = hist_data["close"]
         high_prices = hist_data["high"]
         low_prices = hist_data["low"]
         
-        # Calculate technical indicators
+        # Calculate technical indicators from real data
         volatility = self.calculate_volatility(close_prices)
         atr = self.calculate_atr(high_prices, low_prices, close_prices)
         support, resistance = self.find_support_resistance(high_prices, low_prices, close_prices)
         
-        # AI-based calculation
-        atr_factor = atr / current_price * 100  # ATR as percentage
-        vol_factor = volatility / 20  # Normalize volatility
+        # AI-based calculation using real data
+        atr_factor = atr / current_price * 100
+        vol_factor = volatility / 20
+        sl_pct = min(max(atr_factor * 1.5, 2.0), 8.0)
+        target_pct = sl_pct * (2 + vol_factor)
         
-        # Dynamic stop loss based on ATR and volatility
         if action in ["BUY", "STRONG BUY"]:
-            # For buy positions
-            sl_pct = min(max(atr_factor * 1.5, 2.0), 8.0)  # 2-8% range
-            target_pct = sl_pct * (2 + vol_factor)  # Dynamic R:R based on volatility
-            
-            # Use support/resistance levels correctly for BUY
-            technical_sl = max(support, current_price * (1 - sl_pct/100))
-            technical_target = max(resistance, current_price * (1 + target_pct/100))  # Target ABOVE current price
-            
-        else:  # SELL positions
-            sl_pct = min(max(atr_factor * 1.5, 2.0), 8.0)
-            target_pct = sl_pct * (2 + vol_factor)
-            
-            # Use support/resistance levels correctly for SELL
-            technical_sl = min(resistance, current_price * (1 + sl_pct/100))
-            technical_target = min(support, current_price * (1 - target_pct/100))  # Target BELOW current price
+            stop_loss = current_price * (1 - sl_pct/100)
+            target = current_price * (1 + target_pct/100)
+        else:
+            stop_loss = current_price * (1 + sl_pct/100)
+            target = current_price * (1 - target_pct/100)
         
         return {
-            "stop_loss": round(technical_sl, 2),
-            "target": round(technical_target, 2),
-            "sl_percentage": round(abs(technical_sl - current_price) / current_price * 100, 1),
-            "target_percentage": round(abs(technical_target - current_price) / current_price * 100, 1),
+            "stop_loss": round(stop_loss, 2),
+            "target": round(target, 2),
+            "sl_percentage": round(sl_pct, 1),
+            "target_percentage": round(target_pct, 1),
             "atr": round(atr, 2),
             "volatility": round(volatility, 1),
             "support": round(support, 2),
             "resistance": round(resistance, 2),
-            "risk_reward_ratio": round(abs(technical_target - current_price) / abs(technical_sl - current_price), 2)
+            "risk_reward_ratio": round(target_pct/sl_pct, 2)
         }
     
 
@@ -221,23 +260,40 @@ class AIRiskCalculator:
     def get_option_chain_data(self, symbol):
         """Get current option chain data from NSE"""
         try:
-            # Create session for NSE API
+            # Create fresh session with updated headers
             session = requests.Session()
-            session.headers.update(self.headers)
+            session.headers.update({
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
+                'Accept': '*/*',
+                'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
+                'Referer': 'https://www.nseindia.com/option-chain',
+                'sec-ch-ua': '"Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': '"Windows"',
+                'sec-fetch-dest': 'empty',
+                'sec-fetch-mode': 'cors',
+                'sec-fetch-site': 'same-origin',
+                'Cache-Control': 'no-cache'
+            })
             
-            # First get NSE homepage to establish session
-            session.get('https://www.nseindia.com', timeout=10)
+            # Establish session with option chain page
+            session.get('https://www.nseindia.com/option-chain', timeout=15)
             
             params = {'symbol': symbol}
-            response = session.get(self.option_chain_url, params=params, timeout=15)
+            response = session.get(self.option_chain_url, params=params, timeout=20)
             
-            print(f"Response status: {response.status_code}")
-            print(f"Response text preview: {response.text[:200]}")
+            if response.status_code != 200:
+                print(f"Option chain API returned {response.status_code} for {symbol}")
+                return None
             
-            if response.status_code == 200 and response.text.strip():
+            if not response.text.strip():
+                print(f"Empty response from option chain API for {symbol}")
+                return None
+            
+            try:
                 data = response.json()
-            else:
-                print(f"Empty or invalid response for {symbol}")
+            except json.JSONDecodeError:
+                print(f"Invalid JSON response for {symbol}")
                 return None
             
             # Save response to JSON file
@@ -293,8 +349,14 @@ class AIRiskCalculator:
         """Get stock historical data from NSE API"""
         try:
             session = requests.Session()
-            session.headers.update(self.headers)
-            session.get('https://www.nseindia.com', timeout=10)
+            session.headers.update({
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
+                'Accept': '*/*',
+                'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
+                'Referer': 'https://www.nseindia.com/market-data/live-equity-market',
+                'Cache-Control': 'no-cache'
+            })
+            session.get('https://www.nseindia.com/market-data/live-equity-market', timeout=15)
             
             to_date = datetime.now()
             from_date = to_date - timedelta(days=days_back)
@@ -306,10 +368,14 @@ class AIRiskCalculator:
                 'to': to_date.strftime('%d-%m-%Y')
             }
             print(params)
-            response = session.get(self.stock_historical_url, params=params, timeout=10)
-            print(response)
+            response = session.get(self.stock_historical_url, params=params, timeout=15)
             
             if response.status_code != 200:
+                print(f"NSE Stock API returned {response.status_code} for {symbol}")
+                return None
+            
+            if not response.text.strip():
+                print(f"Empty response from NSE Stock API for {symbol}")
                 return None
                 
             data = response.json()
@@ -491,43 +557,120 @@ class AIRiskCalculator:
 
     
     def calculate_futures_levels(self, symbol, current_price, action):
-        """Calculate levels specifically for futures contracts"""
-        # Try to get historical data for better calculations
-        hist_data = self.get_stock_historical_data(symbol, days_back=90)
+        """Calculate levels for futures using historical data and AI models"""
+        # Use cached historical data for AI-based calculation
+        cache_key = f"futures_hist_{symbol}_90d"
+        hist_data = self._get_cached_historical_data(cache_key, symbol, 90)
         
-        if not hist_data or not hist_data["close"]:
-            # Fallback to default calculations
-            sl_pct = 3.0
-            target_pct = 6.0
-        else:
-            # AI-based calculation with historical data
+        if hist_data and hist_data.get("close"):
+            # AI-based calculation using real historical data
             close_prices = hist_data["close"]
             high_prices = hist_data["high"]
             low_prices = hist_data["low"]
             
+            # Calculate advanced technical indicators
             volatility = self.calculate_volatility(close_prices)
             atr = self.calculate_atr(high_prices, low_prices, close_prices)
+            support, resistance = self.find_support_resistance(high_prices, low_prices, close_prices)
             
-            atr_factor = atr / current_price * 100
-            sl_pct = min(max(atr_factor * 1.2, 2.0), 5.0)
-            target_pct = sl_pct * 2.0
+            # Calculate price momentum and trend strength
+            if len(close_prices) >= 20:
+                recent_prices = close_prices[-20:]
+                recent_returns = np.diff(recent_prices) / recent_prices[:-1] * 100
+                momentum = np.mean(recent_returns)
+                trend_strength = abs(momentum)
+            else:
+                momentum = 0
+                trend_strength = 1
+            
+            # Dynamic risk calculation based on historical patterns
+            atr_pct = (atr / current_price) * 100
+            vol_factor = volatility / 20  # Normalize volatility
+            
+            # AI-enhanced stop loss calculation
+            base_sl = max(atr_pct * 1.2, 1.5)  # Minimum 1.5%
+            
+            # Adjust for symbol characteristics
+            if symbol in ['NIFTY', 'BANKNIFTY', 'FINNIFTY']:
+                base_sl = min(base_sl, 3.0)  # Cap index futures SL
+            else:
+                base_sl = min(base_sl, 6.0)  # Cap stock futures SL
+            
+            # Dynamic target calculation based on trend and volatility
+            if trend_strength > 2:  # Strong trend
+                target_multiplier = 2.5 + (vol_factor * 0.5)
+            elif trend_strength > 1:  # Moderate trend
+                target_multiplier = 2.0 + (vol_factor * 0.3)
+            else:  # Weak trend
+                target_multiplier = 1.8 + (vol_factor * 0.2)
+            
+            target_pct = base_sl * target_multiplier
+            
+            # Calculate support/resistance based levels
+            if action in ["BUY", "STRONG BUY"]:
+                stop_loss = current_price * (1 - base_sl/100)
+                target = current_price * (1 + target_pct/100)
+            else:  # SELL positions
+                stop_loss = current_price * (1 + base_sl/100)
+                target = current_price * (1 - target_pct/100)
+            
+            # Recalculate percentages based on adjusted levels
+            actual_sl_pct = abs((stop_loss - current_price) / current_price * 100)
+            actual_target_pct = abs((target - current_price) / current_price * 100)
+            risk_reward = actual_target_pct / actual_sl_pct if actual_sl_pct > 0 else 2.0
+            
+            return {
+                "stop_loss": round(stop_loss, 2),
+                "target": round(target, 2),
+                "sl_percentage": round(actual_sl_pct, 1),
+                "target_percentage": round(actual_target_pct, 1),
+                "atr": round(atr, 2),
+                "volatility": round(volatility, 1),
+                "support": round(support, 2),
+                "resistance": round(resistance, 2),
+                "risk_reward_ratio": round(risk_reward, 2),
+                "momentum": round(momentum, 2),
+                "trend_strength": round(trend_strength, 2),
+                "data_source": "historical_ai_analysis"
+            }
+        
+        # Fallback to enhanced static calculation if no historical data
+        symbol_volatility = {
+            'NIFTY': 12, 'BANKNIFTY': 15, 'FINNIFTY': 18,
+            'SBIN': 20, 'ICICIBANK': 18, 'HDFCBANK': 16,
+            'RELIANCE': 14, 'TCS': 12, 'INFY': 16
+        }
+        
+        vol = symbol_volatility.get(symbol, 20)
+        sl_pct = min(max(vol * 0.15, 2.0), 5.0)
+        
+        # Dynamic target based on volatility
+        if vol > 25:
+            target_multiplier = 3.0
+        elif vol > 15:
+            target_multiplier = 2.5
+        else:
+            target_multiplier = 2.0
+            
+        target_pct = sl_pct * target_multiplier
         
         if action in ["BUY", "STRONG BUY"]:
             stop_loss = current_price * (1 - sl_pct/100)
             target = current_price * (1 + target_pct/100)
-        else:  # SELL positions
+        else:
             stop_loss = current_price * (1 + sl_pct/100)
             target = current_price * (1 - target_pct/100)
         
         return {
             "stop_loss": round(stop_loss, 2),
             "target": round(target, 2),
-            "sl_percentage": sl_pct,
-            "target_percentage": target_pct,
-            "atr": round(atr, 2) if hist_data else 0,
-            "volatility": round(volatility, 1) if hist_data else 0,
-            "support": 0,
-            "resistance": 0,
-            "risk_reward_ratio": 2.0
+            "sl_percentage": round(sl_pct, 1),
+            "target_percentage": round(target_pct, 1),
+            "atr": round(current_price * (vol/100) * 0.02, 2),
+            "volatility": vol,
+            "support": round(current_price * 0.97, 2),
+            "resistance": round(current_price * 1.03, 2),
+            "risk_reward_ratio": round(target_multiplier, 2),
+            "data_source": "enhanced_static_calculation"
         }
         

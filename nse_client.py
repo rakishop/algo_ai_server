@@ -410,16 +410,22 @@ class NSEClient:
             session.close()
 
     def get_option_chain_info(self, symbol: str) -> Dict[str, Any]:
-        """Fetch option chain info for symbol"""
+        """Fetch option chain info for symbol - Step 1 of two-step process"""
         session = self._get_fresh_session()
         try:
+            # This endpoint returns contract info including available expiry dates and strike prices
             response = session.get(
                 f"{self.base_url}/api/option-chain-indices?symbol={symbol.upper()}",
                 timeout=10
             )
             response.raise_for_status()
             if response.text.strip():
-                return response.json()
+                data = response.json()
+                # Ensure we have the contract info structure
+                if "records" in data:
+                    return data
+                else:
+                    return {"error": "Invalid contract info structure", "data": data}
             else:
                 return {"error": "Empty response from NSE", "status_code": response.status_code}
         except Exception as e:
@@ -428,16 +434,28 @@ class NSEClient:
             session.close()
 
     def get_option_chain(self, symbol: str, expiry: str = None) -> Dict[str, Any]:
-        """Fetch option chain data"""
+        """Fetch option chain data - Step 2 of two-step process"""
         session = self._get_fresh_session()
         try:
+            # This endpoint returns the actual option chain data for specific expiry
             url = f"{self.base_url}/api/option-chain-indices?symbol={symbol.upper()}"
             if expiry:
+                # Format expiry date properly if needed
                 url += f"&expiry={expiry}"
+            
             response = session.get(url, timeout=10)
             response.raise_for_status()
+            
             if response.text.strip():
-                return response.json()
+                data = response.json()
+                # Validate option chain structure
+                if "records" in data and "data" in data["records"]:
+                    return data
+                elif "records" in data:
+                    # Sometimes data might be in different structure
+                    return data
+                else:
+                    return {"error": "Invalid option chain structure", "raw_data": data}
             else:
                 return {"error": "Empty response from NSE", "status_code": response.status_code}
         except Exception as e:
@@ -559,6 +577,24 @@ class NSEClient:
         try:
             response = session.get(
                 f"{self.base_url}/api/historicalOR/fo/derivatives?from={from_date}&to={to_date}&optionType={option_type}&strikePrice={strike_price}&expiryDate={expiry_date}&instrumentType=OPTIDX&symbol={symbol}",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+        finally:
+            session.close()
+    
+    def get_underlying_information(self) -> Dict[str, Any]:
+        """Fetch complete list of underlying symbols for futures and options"""
+        session = self._get_fresh_session()
+        try:
+            response = session.get(
+                f"{self.base_url}/api/underlying-information",
                 timeout=10
             )
             response.raise_for_status()

@@ -7,7 +7,7 @@ IF NOT EXIST ".git" git init
 
 REM Stage and commit
 git add .
-git commit -m "initials commit"
+git commit -m "ai model implementation with all options and futures analysis"
 
 REM Set branch
 git branch -M main

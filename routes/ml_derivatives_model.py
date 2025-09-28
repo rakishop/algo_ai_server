@@ -138,22 +138,32 @@ class DerivativesMLModel:
         df['liquidity_score'] = df['numberOfContractsTraded'] * df['lastPrice']
         df['premium_efficiency'] = df['premiumTurnover'] / df['numberOfContractsTraded']
         
-        # AI Scoring using pandas operations
-        df['ai_score'] = (
-            df['volume_rank'] * 40 +
-            (df['price_momentum'] / df['price_momentum'].max()) * 30 +
-            df['oi_rank'] * 20 +
-            (1 - df['moneyness']) * 10
-        )
+        # Use consistent AI scoring function for each contract
+        def calculate_consistent_ai_score(volume, price_change, current_price):
+            """Single consistent AI scoring function used across all endpoints"""
+            volume_score = min((volume / 1000) * 10, 40)
+            price_score = min(abs(price_change) * 1.5, 30)
+            liquidity_score = min((current_price * volume) / 100000, 20)
+            base_score = 10
+            
+            ai_score = volume_score + price_score + liquidity_score + base_score
+            return max(30, min(ai_score, 95))
         
-        # ML predictions if model is trained
+        df['ai_score'] = df.apply(lambda row: calculate_consistent_ai_score(
+            row['numberOfContractsTraded'], 
+            row['pChange'], 
+            row['lastPrice']
+        ), axis=1)
+        
+        # ML predictions if model is trained - keep base AI score consistent
         if self.is_trained:
             features = self.prepare_features(contracts)
             if len(features) > 0:
                 X_scaled = self.scaler.transform(features)
                 ml_predictions = self.model.predict_proba(X_scaled)
                 df['ml_probability'] = [prob[1] for prob in ml_predictions]
-                df['ai_score'] = df['ai_score'] * 0.6 + df['ml_probability'] * 100 * 0.4
+                # Apply minimal ML adjustment to maintain consistency
+                df['ai_score'] = df['ai_score'] * 0.9 + df['ml_probability'] * 10 * 0.1
         
         # Generate recommendations using pandas
         def get_recommendation(row):
@@ -177,20 +187,58 @@ class DerivativesMLModel:
         
         recommendations = []
         for _, row in top_recs.iterrows():
+            # Generate reasons for being in top 3
+            reasons = []
+            if row['volume_rank'] > 0.8:
+                reasons.append("Exceptional volume activity")
+            if abs(row['pChange']) > 100:
+                reasons.append("Strong price momentum")
+            if row['oi_rank'] > 0.7:
+                reasons.append("High open interest")
+            if row['liquidity_score'] > df['liquidity_score'].quantile(0.8):
+                reasons.append("Superior liquidity")
+            
+            # Calculate trading details for top 3 recommendations
+            current_price = float(row['lastPrice'])
+            recommendation = str(row['recommendation'])
+            
+            if "BUY" in recommendation:
+                stop_loss = current_price * 0.85
+                target = current_price * 1.25
+            else:
+                stop_loss = current_price * 1.15
+                target = current_price * 0.75
+            
+            sl_percentage = ((stop_loss - current_price) / current_price) * 100
+            target_percentage = ((target - current_price) / current_price) * 100
+            risk_reward_ratio = abs(target_percentage / sl_percentage) if sl_percentage != 0 else 1.0
+            
             rec = {
                 'identifier': str(row['identifier']),
                 'underlying': str(row['underlying']),
                 'option_type': str(row['optionType']),
                 'strike_price': float(row['strikePrice']),
                 'ai_score': float(round(row['ai_score'], 2)),
-                'recommendation': str(row['recommendation']),
+                'recommendation': recommendation,
                 'trend': str(row['trend']),
                 'risk_level': str(row['risk_level']),
                 'volume_percentile': float(round(row['volume_rank'] * 100, 1)),
                 'price_change': float(row['pChange']),
                 'liquidity_score': float(row['liquidity_score']),
-                'last_price': float(row['lastPrice']),
-                'expiry_date': str(row.get('expiryDate', ''))
+                'last_price': current_price,
+                'expiry_date': str(row.get('expiryDate', '')),
+                'stop_loss': round(stop_loss, 2),
+                'target': round(target, 2),
+                'sl_percentage': round(sl_percentage, 2),
+                'target_percentage': round(target_percentage, 2),
+                'risk_reward_ratio': round(risk_reward_ratio, 2),
+                'why_top_3': reasons[0] if reasons else "High AI score",
+                'trading_plan': {
+                    'entry': f"{recommendation} at ₹{current_price}",
+                    'stop_loss': f"₹{round(stop_loss, 2)} ({round(sl_percentage, 2)}%)",
+                    'target': f"₹{round(target, 2)} ({round(target_percentage, 2)}%)",
+                    'risk_reward': f"1:{round(risk_reward_ratio, 2)}"
+                }
             }
             
             # Add historical analysis if available
@@ -225,18 +273,63 @@ class DerivativesMLModel:
                         primary_rec['historical_analysis'] = contract['historical_analysis']
                     break
         
+        # Calculate trading details for best trades
+        def get_trading_details(row):
+            current_price = float(row['lastPrice'])
+            recommendation = str(row['recommendation'])
+            
+            if "BUY" in recommendation:
+                stop_loss = current_price * 0.85
+                target = current_price * 1.25
+            else:
+                stop_loss = current_price * 1.15
+                target = current_price * 0.75
+            
+            sl_percentage = ((stop_loss - current_price) / current_price) * 100
+            target_percentage = ((target - current_price) / current_price) * 100
+            risk_reward_ratio = abs(target_percentage / sl_percentage) if sl_percentage != 0 else 1.0
+            
+            # Generate reason for being best trade
+            reasons = []
+            if row['volume_rank'] > 0.8:
+                reasons.append("Exceptional volume activity")
+            if abs(row['pChange']) > 100:
+                reasons.append("Strong price momentum")
+            if row['oi_rank'] > 0.7:
+                reasons.append("High open interest")
+            if row['liquidity_score'] > df['liquidity_score'].quantile(0.8):
+                reasons.append("Superior liquidity")
+            
+            # Check if in top 3
+            identifier = str(row['identifier'])
+            in_top_3 = identifier in [rec['identifier'] for rec in recommendations]
+            
+            return {
+                'strike': float(row['strikePrice']),
+                'action': recommendation,
+                'ai_score': float(round(row['ai_score'], 2)),
+                'last_price': current_price,
+                'expiry_date': str(row.get('expiryDate', '')),
+                'stop_loss': round(stop_loss, 2),
+                'target': round(target, 2),
+                'sl_percentage': round(sl_percentage, 2),
+                'target_percentage': round(target_percentage, 2),
+                'risk_reward_ratio': round(risk_reward_ratio, 2),
+                'why_best': reasons[0] if reasons else "Highest AI score in category",
+                'in_top_3_recommendations': in_top_3,
+                'exclusion_reason': None if in_top_3 else "Different option type category (Call vs Put)",
+                'trading_plan': {
+                    'entry': f"{recommendation} at ₹{current_price}",
+                    'stop_loss': f"₹{round(stop_loss, 2)} ({round(sl_percentage, 2)}%)",
+                    'target': f"₹{round(target, 2)} ({round(target_percentage, 2)}%)",
+                    'risk_reward': f"1:{round(risk_reward_ratio, 2)}"
+                }
+            }
+        
         best_trades = {
             'primary_recommendation': primary_rec,
-            'best_call_trade': {
-                'strike': float(best_call.iloc[0]['strikePrice']) if not best_call.empty else None,
-                'action': str(best_call.iloc[0]['recommendation']) if not best_call.empty else None,
-                'ai_score': float(round(best_call.iloc[0]['ai_score'], 2)) if not best_call.empty else None
-            } if not best_call.empty else None,
-            'best_put_trade': {
-                'strike': float(best_put.iloc[0]['strikePrice']) if not best_put.empty else None,
-                'action': str(best_put.iloc[0]['recommendation']) if not best_put.empty else None,
-                'ai_score': float(round(best_put.iloc[0]['ai_score'], 2)) if not best_put.empty else None
-            } if not best_put.empty else None
+            'best_call_trade': get_trading_details(best_call.iloc[0]) if not best_call.empty else None,
+            'best_put_trade': get_trading_details(best_put.iloc[0]) if not best_put.empty else None
         }
         
         return {

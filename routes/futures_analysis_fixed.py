@@ -220,7 +220,7 @@ class FuturesAnalyzer:
                 recommendation = "STRONG BUY"
             elif category == "Slide-in-OI-Slide":
                 pattern_score += 25
-                signals.append("Bearish: Fresh Short Build-up")
+                signals.append("Bearish: Long Unwinding")
                 recommendation = "STRONG SELL"
             elif category == "Rise-in-OI-Slide":
                 pattern_score += 20
@@ -525,6 +525,47 @@ def create_futures_analysis_routes(nse_client):
         except Exception as e:
             return {"error": str(e)}
     
+    @router.get("/available-symbols")
+    def get_available_futures_symbols():
+        """Get all available futures and options symbols from NSE"""
+        try:
+            underlying_info = nse_client.get_underlying_information()
+            
+            if "error" in underlying_info:
+                return underlying_info
+            
+            result = {
+                "indices": [],
+                "stocks": [],
+                "total_count": 0
+            }
+            
+            if "data" in underlying_info:
+                if "IndexList" in underlying_info["data"]:
+                    for index in underlying_info["data"]["IndexList"]:
+                        result["indices"].append({
+                            "symbol": index["symbol"],
+                            "name": index["underlying"],
+                            "serial_number": index["serialNumber"]
+                        })
+                
+                if "UnderlyingList" in underlying_info["data"]:
+                    for stock in underlying_info["data"]["UnderlyingList"]:
+                        result["stocks"].append({
+                            "symbol": stock["symbol"],
+                            "name": stock["underlying"],
+                            "serial_number": stock["serialNumber"]
+                        })
+            
+            result["total_count"] = len(result["indices"]) + len(result["stocks"])
+            result["indices_count"] = len(result["indices"])
+            result["stocks_count"] = len(result["stocks"])
+            
+            return result
+            
+        except Exception as e:
+            return {"error": str(e)}
+    
     @router.get("/position-sizing")
     def calculate_position_sizing(
         symbol: str = Query(..., description="Symbol like NIFTY, SBIN, ICICI")
@@ -766,12 +807,24 @@ def create_futures_analysis_routes(nse_client):
                     else:
                         reasons.append(f"Pattern analysis: Low confidence ({confidence}%) - avoid trade")
                 
-                # Add pattern reasons
+                # Correct pattern interpretation
                 category = best_contract["category"]
                 if category == "Rise-in-OI-Rise":
-                    reasons.append("Fresh long build-up")
+                    reasons.append("Fresh long build-up - bullish")
+                    if trade_action == "SELL":
+                        trade_action = "BUY"
                 elif category == "Slide-in-OI-Slide":
-                    reasons.append("Fresh short build-up")
+                    reasons.append("Long unwinding - bearish")
+                    if trade_action == "BUY":
+                        trade_action = "SELL"
+                elif category == "Rise-in-OI-Slide":
+                    reasons.append("Fresh short build-up - bearish")
+                    if trade_action == "BUY":
+                        trade_action = "SELL"
+                elif category == "Slide-in-OI-Rise":
+                    reasons.append("Short covering - bullish")
+                    if trade_action == "SELL":
+                        trade_action = "BUY"
                 
                 if best_contract["volume"] > 100000:
                     reasons.append("High volume")
@@ -789,6 +842,7 @@ def create_futures_analysis_routes(nse_client):
             
             return {
                 "symbol": symbol.upper(),
+                "current_price": float(current_price),
                 "trade_recommendation": {
                     "should_trade": should_trade,
                     "action": trade_action,
@@ -810,6 +864,7 @@ def create_futures_analysis_routes(nse_client):
                     "potential_profit": float(potential_profit) if should_trade else 0
                 },
                 "market_data": {
+                    "current_price": float(current_price),
                     "price_change": float(best_contract["pChange"]),
                     "oi_change": float(best_contract["pChangeInOI"]),
                     "volume": int(best_contract["volume"]),

@@ -137,31 +137,49 @@ class MarketScanner:
         try:
             losers_data = self.nse_client.get_losers_data()
             volume_data = self.nse_client.get_volume_gainers()
+            active_data = self.nse_client.get_most_active_securities()
             
             reversal_stocks = []
             
+            # Extract all losers from different categories
+            all_losers = []
+            if isinstance(losers_data, dict):
+                for category in ['NIFTY', 'BANKNIFTY', 'NIFTYNEXT50', 'FOSec', 'allSec']:
+                    if category in losers_data and 'data' in losers_data[category]:
+                        all_losers.extend(losers_data[category]['data'])
+            
             # Focus on losers with high volume
-            if "data" in losers_data:
-                for stock in losers_data["data"]:
+            if all_losers:
+                for stock in all_losers:
                     features = self.ml_analyzer.extract_features(stock)
                     price_change = features.get('perChange', 0)
                     
                     if price_change <= oversold_threshold:
-                        # Check if it's in volume gainers (potential reversal signal)
+                        # Check if it's in volume gainers or active securities (potential reversal signal)
                         symbol = stock.get('symbol')
                         volume_spike_detected = False
+                        high_activity = False
                         
+                        # Check volume gainers
                         if "data" in volume_data:
                             for vol_stock in volume_data["data"]:
                                 if vol_stock.get('symbol') == symbol:
                                     volume_spike_detected = True
                                     break
                         
-                        if volume_spike_detected:
+                        # Also check active securities for high trading activity
+                        if "data" in active_data:
+                            for active_stock in active_data["data"]:
+                                if active_stock.get('symbol') == symbol:
+                                    high_activity = True
+                                    break
+                        
+                        # Accept if either volume spike or high activity is detected
+                        if volume_spike_detected or high_activity:
                             reversal_score = min(
                                 abs(price_change) * 10 + 
                                 (features.get('trade_quantity', 0) / 1000000) * 20 + 
-                                30,  # Base score for meeting criteria
+                                30 + (10 if volume_spike_detected else 0) + (5 if high_activity else 0),
                                 100
                             )
                             
@@ -170,8 +188,37 @@ class MarketScanner:
                                 **features,
                                 'reversal_score': reversal_score,
                                 'reversal_signal': 'BULLISH_REVERSAL',
-                                'volume_spike': volume_spike_detected
+                                'volume_spike': volume_spike_detected,
+                                'high_activity': high_activity
                             })
+            
+            # If no strict reversals found, include some moderate losers with good volume
+            if len(reversal_stocks) < 3:
+                moderate_threshold = max(oversold_threshold / 2, -2.5)  # More lenient threshold
+                
+                if all_losers:
+                    for stock in all_losers:
+                        if stock.get('symbol') not in [s.get('symbol') for s in reversal_stocks]:
+                            features = self.ml_analyzer.extract_features(stock)
+                            price_change = features.get('perChange', 0)
+                            volume = features.get('trade_quantity', 0)
+                            
+                            if moderate_threshold <= price_change <= oversold_threshold and volume > 500000:
+                                reversal_score = min(
+                                    abs(price_change) * 8 + 
+                                    (volume / 1000000) * 15 + 
+                                    20,  # Lower base score for moderate candidates
+                                    100
+                                )
+                                
+                                reversal_stocks.append({
+                                    **stock,
+                                    **features,
+                                    'reversal_score': reversal_score,
+                                    'reversal_signal': 'MODERATE_REVERSAL',
+                                    'volume_spike': False,
+                                    'high_activity': False
+                                })
             
             reversal_stocks.sort(key=lambda x: x['reversal_score'], reverse=True)
             
