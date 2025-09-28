@@ -1,0 +1,77 @@
+{
+  "records": {
+    "expiryDates": ["30-Oct-2025", "06-Nov-2025", "13-Nov-2025"],
+    "data": [
+      {
+        "strikePrice": 24000,
+        "expiryDate": "30-Oct-2025",
+        "CE": {
+          "strikePrice": 24000,
+          "expiryDate": "30-Oct-2025",
+          "underlying": "NIFTY",
+          "identifier": "OPTIDXNIFTY30-10-2025CE24000.00",
+          "openInterest": 150000,
+          "changeinOpenInterest": 5000,
+          "pchangeinOpenInterest": 3.45,
+          "totalTradedVolume": 25000,
+          "impliedVolatility": 18.5,
+          "lastPrice": 125.50,
+          "change": 5.25,
+          "pChange": 4.36,
+          "totalBuyQuantity": 12500,
+          "totalSellQuantity": 11200,
+          "bidQty": 2500,
+          "bidprice": 124.75,
+          "askQty": 1800,
+          "askPrice": 126.25,
+          "underlyingValue": 24089.65
+        },
+        "PE": {
+          "strikePrice": 24000,
+          "expiryDate": "30-Oct-2025",
+          "underlying": "NIFTY",
+          "identifier": "OPTIDXNIFTY30-10-2025PE24000.00",
+          "openInterest": 180000,
+          "changeinOpenInterest": -2000,
+          "pchangeinOpenInterest": -1.09,
+          "totalTradedVolume": 18000,
+          "impliedVolatility": 19.2,
+          "lastPrice": 35.75,
+          "change": -2.15,
+          "pChange": -5.67,
+          "totalBuyQuantity": 8500,
+          "totalSellQuantity": 9200,
+          "bidQty": 1500,
+          "bidprice": 35.25,
+          "askQty": 2200,
+          "askPrice": 36.50,
+          "underlyingValue": 24089.65
+        }
+      }
+    ],
+    "strikePrices": [23000, 23100, 23200, 24000, 24100, 24200, 25000],
+    "underlyingValue": 24089.65
+  },
+  "filtered": {
+    "data": [
+      {
+        "strikePrice": 24000,
+        "expiryDate": "30-Oct-2025",
+        "CE": {
+          "openInterest": 150000,
+          "impliedVolatility": 18.5,
+          "lastPrice": 125.50,
+          "change": 5.25,
+          "pChange": 4.36
+        },
+        "PE": {
+          "openInterest": 180000,
+          "impliedVolatility": 19.2,
+          "lastPrice": 35.75,
+          "change": -2.15,
+          "pChange": -5.67
+        }
+      }
+    ]
+  }
+}

@@ -30,13 +30,14 @@ class DerivativesMLModel:
         """Extract features from derivatives data"""
         features = []
         for contract in data:
-            volume = contract.get('numberOfContractsTraded', 0)
+            # Handle both API formats
+            volume = contract.get('numberOfContractsTraded', contract.get('noOfTrades', contract.get('volume', 0)))
             price_change = contract.get('pChange', 0)
             oi = contract.get('openInterest', 0)
             last_price = contract.get('lastPrice', 0)
             strike = contract.get('strikePrice', 0)
             underlying_value = contract.get('underlyingValue', 0)
-            premium_turnover = contract.get('premiumTurnover', 0)
+            premium_turnover = contract.get('premiumTurnover', contract.get('premiumTurnOver', 0))
             
             # Calculate derived features
             volume_ratio = volume / 1000000 if volume > 0 else 0
@@ -83,8 +84,15 @@ class DerivativesMLModel:
         print(f"Processing {len(historical_data)} datasets for training")
         
         for i, day_data in enumerate(historical_data):
+            contracts = []
             if 'volume' in day_data and 'data' in day_data['volume']:
                 contracts = day_data['volume']['data']
+            elif 'data' in day_data:
+                contracts = day_data['data']
+            elif isinstance(day_data, list):
+                contracts = day_data
+            
+            if contracts:
                 features = self.prepare_features(contracts)
                 labels = self.create_labels(contracts)
                 

@@ -11,6 +11,8 @@ from ai_endpoints import AIEndpoints
 from routes.market_routes import create_market_routes
 from routes.derivatives_routes import create_derivatives_routes
 from routes.indices_routes import create_indices_routes
+from routes.equity_routes import create_equity_routes
+from routes.futures_analysis import create_futures_analysis_routes
 from option_chain_endpoint import create_option_chain_routes
 from charting_endpoint import create_charting_routes
 from websocket_streaming import manager
@@ -186,6 +188,8 @@ enhanced_ai_endpoints = EnhancedAIEndpoints(app, nse_client)
 app.include_router(create_market_routes(nse_client))
 app.include_router(create_derivatives_routes(nse_client))
 app.include_router(create_indices_routes(nse_client))
+app.include_router(create_equity_routes(nse_client))
+app.include_router(create_futures_analysis_routes(nse_client))
 app.include_router(create_charting_routes(nse_client))
 # Option chain routes integrated into main comprehensive analysis endpoint
 

@@ -1,11 +1,14 @@
 from fastapi import APIRouter, Query, UploadFile, File
 from typing import Optional
 from .ml_derivatives_model import DerivativesMLModel
+from utils.ai_risk_calculator import AIRiskCalculator
 import json
+from datetime import datetime
 
 def create_derivatives_routes(nse_client):
     router = APIRouter(prefix="/api/v1/derivatives", tags=["derivatives"])
     ml_model = DerivativesMLModel()
+    risk_calculator = AIRiskCalculator()
     
     @router.get("/market-snapshot")
     def get_derivatives_snapshot():
@@ -15,6 +18,14 @@ def create_derivatives_routes(nse_client):
     def get_most_active_underlying():
         return nse_client.get_most_active_underlying()
 
+    @router.get("/oi-spurts-underlyings")
+    def get_oi_spurts_underlyings():
+        return nse_client.get_oi_spurts_underlyings()
+    
+    @router.get("/oi-spurts-contracts")
+    def get_oi_spurts_contracts():
+        return nse_client.get_oi_spurts_contracts()
+    
     @router.get("/open-interest-spurts")
     def get_oi_spurts():
         underlyings = nse_client.get_oi_spurts_underlyings()
@@ -26,15 +37,43 @@ def create_derivatives_routes(nse_client):
     
     @router.get("/equity-snapshot")
     def get_derivatives_equity_snapshot(limit: Optional[int] = Query(20, description="Number of contracts to fetch")):
-        """Get derivatives equity snapshot with volume data"""
+        """Get derivatives equity snapshot data"""
         return nse_client.get_derivatives_equity_snapshot(limit)
+    
+    @router.get("/enhanced-snapshot")
+    def get_enhanced_derivatives_snapshot(limit: Optional[int] = Query(20)):
+        """Get enhanced derivatives data from multiple sources"""
+        try:
+            snapshot_data = nse_client.get_derivatives_equity_snapshot(limit)
+            top20_data = nse_client.get_top20_derivatives_contracts()
+            underlying_data = nse_client.get_most_active_underlying()
+            oi_spurts_underlyings = nse_client.get_oi_spurts_underlyings()
+            oi_spurts_contracts = nse_client.get_oi_spurts_contracts()
+            
+            return {
+                "snapshot_contracts": snapshot_data.get("volume", {}).get("data", []),
+                "top20_contracts": top20_data.get("data", []),
+                "underlying_analysis": underlying_data.get("data", []),
+                "oi_spurts_underlyings": oi_spurts_underlyings.get("data", []),
+                "oi_spurts_contracts": oi_spurts_contracts.get("data", []),
+                "data_sources": {
+                    "snapshot_count": len(snapshot_data.get("volume", {}).get("data", [])),
+                    "top20_count": len(top20_data.get("data", [])),
+                    "underlying_count": len(underlying_data.get("data", [])),
+                    "oi_spurts_underlyings_count": len(oi_spurts_underlyings.get("data", [])),
+                    "oi_spurts_contracts_count": len(oi_spurts_contracts.get("data", []))
+                }
+            }
+        except Exception as e:
+            return {"error": str(e)}
     
     @router.get("/ai-trading-calls")
     def get_ai_derivatives_trading_calls(limit: Optional[int] = Query(20, description="Number of contracts to analyze")):
-        """Get AI-powered derivatives trading recommendations"""
+        """Get AI-powered derivatives trading recommendations with OI spurts analysis"""
         try:
             # Get derivatives data
             data = nse_client.get_derivatives_equity_snapshot(limit)
+            oi_spurts = nse_client.get_oi_spurts_contracts()
             
             if "error" in data:
                 return data
@@ -145,6 +184,28 @@ def create_derivatives_routes(nse_client):
                 else:
                     risk_level = "HIGH"
                 
+                # AI-based risk calculation for options
+                underlying_symbol = contract.get("underlying", "NIFTY")
+                expiry_date = contract.get("expiryDate", "")
+                
+                # Calculate days to expiry
+                try:
+                    expiry_dt = datetime.strptime(expiry_date, "%d-%b-%Y")
+                    days_to_expiry = (expiry_dt - datetime.now()).days
+                except:
+                    days_to_expiry = 7  # Default 1 week
+                
+                # Get AI-calculated levels for options
+                ai_levels = risk_calculator.calculate_options_levels(
+                    underlying_symbol, last_price, recommendation, 
+                    option_type, strike, max(days_to_expiry, 1)
+                )
+                
+                stop_loss = ai_levels['stop_loss']
+                target = ai_levels['target']
+                base_sl = ai_levels['sl_percentage']
+                base_target = ai_levels['target_percentage']
+                
                 call_data = {
                     "identifier": contract.get("identifier"),
                     "underlying": contract.get("underlying"),
@@ -152,6 +213,18 @@ def create_derivatives_routes(nse_client):
                     "strike_price": strike,
                     "expiry_date": contract.get("expiryDate"),
                     "last_price": last_price,
+                    "stop_loss": stop_loss,
+                    "target": target,
+                    "sl_percentage": base_sl,
+                    "target_percentage": base_target,
+                    "risk_reward_ratio": ai_levels['risk_reward_ratio'],
+                    "volatility": ai_levels.get('volatility', 0),
+                    "implied_volatility": ai_levels.get('implied_volatility', 0),
+                    "time_factor": ai_levels.get('time_factor', 1),
+                    "days_to_expiry": days_to_expiry,
+                    "delta_approx": ai_levels.get('delta_approx', 0),
+                    "open_interest": ai_levels.get('open_interest', 0),
+                    "underlying_value": ai_levels.get('underlying_value', 0),
                     "price_change_percent": price_change,
                     "volume": volume,
                     "open_interest": oi,
@@ -161,7 +234,16 @@ def create_derivatives_routes(nse_client):
                     "trend": trend,
                     "risk_level": risk_level,
                     "signals": signals,
-                    "premium_turnover": contract.get("premiumTurnover", 0)
+                    "premium_turnover": contract.get("premiumTurnover", 0),
+                    "trading_plan": {
+                        "entry": f"{recommendation} at ₹{last_price}",
+                        "stop_loss": f"₹{stop_loss} ({base_sl}%)",
+                        "target": f"₹{target} ({base_target}%)",
+                        "risk_reward": f"1:{ai_levels['risk_reward_ratio']}",
+                        "time_analysis": f"Expiry: {days_to_expiry} days, Time Factor: {ai_levels.get('time_factor', 1)}",
+                        "option_greeks": f"Delta: {ai_levels.get('delta_approx', 0)}, IV: {ai_levels.get('implied_volatility', 0)}%",
+                        "market_data": f"OI: {ai_levels.get('open_interest', 0)}, Underlying: {ai_levels.get('underlying_value', 0)}"
+                    }
                 }
                 
                 trading_calls.append(call_data)
@@ -236,22 +318,113 @@ def create_derivatives_routes(nse_client):
     
     @router.get("/auto-ml-recommendations")
     def get_auto_ml_recommendations(limit: Optional[int] = Query(20)):
-        """Auto-train ML model with current data and get recommendations"""
+        """Auto-train ML model with enhanced dataset and get recommendations"""
         try:
-            # Get current data
-            current_data = nse_client.get_derivatives_equity_snapshot(limit)
-            if "error" in current_data:
-                return current_data
+            # Get enhanced data from multiple sources
+            enhanced_data = get_enhanced_derivatives_snapshot(limit)
+            if "error" in enhanced_data:
+                return enhanced_data
             
-            # Auto-train model with all historical data + current data
-            training_result = ml_model.train_with_historical_data(current_data)
+            # Use snapshot contracts for ML training and predictions
+            training_data = {"volume": {"data": enhanced_data["snapshot_contracts"]}}
+            
+            # Auto-train model
+            training_result = ml_model.train_with_historical_data(training_data)
             
             # Get ML predictions
-            predictions = ml_model.predict_recommendations(current_data)
+            predictions = ml_model.predict_recommendations(training_data)
             
-            # Combine training info with predictions
+            # Add AI risk calculations to recommendations
+            if "top_3_recommendations" in predictions:
+                for rec in predictions["top_3_recommendations"]:
+                    try:
+                        # Calculate AI levels for each recommendation
+                        underlying_symbol = rec.get("underlying", "NIFTY")
+                        current_price = rec.get("last_price", 0)
+                        action = rec.get("recommendation", "BUY")
+                        option_type = rec.get("option_type", "Call")
+                        strike_price = rec.get("strike_price", 0)
+                        
+                        # Calculate days to expiry
+                        expiry_date = rec.get("expiry_date", "")
+                        try:
+                            expiry_dt = datetime.strptime(expiry_date, "%d-%b-%Y")
+                            days_to_expiry = (expiry_dt - datetime.now()).days
+                        except:
+                            days_to_expiry = 7
+                        
+                        # Get AI-calculated levels
+                        ai_levels = risk_calculator.calculate_options_levels(
+                            underlying_symbol, current_price, action, 
+                            option_type, strike_price, max(days_to_expiry, 1)
+                        )
+                        
+                        # Add to recommendation
+                        rec.update({
+                            "stop_loss": ai_levels['stop_loss'],
+                            "target": ai_levels['target'],
+                            "sl_percentage": ai_levels['sl_percentage'],
+                            "target_percentage": ai_levels['target_percentage'],
+                            "risk_reward_ratio": ai_levels['risk_reward_ratio'],
+                            "days_to_expiry": days_to_expiry,
+                            "trading_plan": {
+                                "entry": f"{action} at ₹{current_price}",
+                                "stop_loss": f"₹{ai_levels['stop_loss']} ({ai_levels['sl_percentage']}%)",
+                                "target": f"₹{ai_levels['target']} ({ai_levels['target_percentage']}%)",
+                                "risk_reward": f"1:{ai_levels['risk_reward_ratio']}",
+                                "expiry": f"{days_to_expiry} days remaining"
+                            }
+                        })
+                    except Exception as e:
+                        print(f"Error calculating levels for {rec.get('identifier', 'unknown')}: {e}")
+            
+            # Add to primary recommendation as well
+            if "best_trades" in predictions and "primary_recommendation" in predictions["best_trades"]:
+                primary = predictions["best_trades"]["primary_recommendation"]
+                try:
+                    underlying_symbol = primary.get("underlying", "NIFTY")
+                    current_price = primary.get("last_price", 0)
+                    action = primary.get("recommendation", "BUY")
+                    option_type = primary.get("option_type", "Call")
+                    strike_price = primary.get("strike_price", 0)
+                    
+                    # Calculate days to expiry
+                    expiry_date = primary.get("expiry_date", "")
+                    try:
+                        expiry_dt = datetime.strptime(expiry_date, "%d-%b-%Y")
+                        days_to_expiry = (expiry_dt - datetime.now()).days
+                    except:
+                        days_to_expiry = 7
+                    
+                    # Get AI-calculated levels
+                    ai_levels = risk_calculator.calculate_options_levels(
+                        underlying_symbol, current_price, action, 
+                        option_type, strike_price, max(days_to_expiry, 1)
+                    )
+                    
+                    # Add to primary recommendation
+                    primary.update({
+                        "stop_loss": ai_levels['stop_loss'],
+                        "target": ai_levels['target'],
+                        "sl_percentage": ai_levels['sl_percentage'],
+                        "target_percentage": ai_levels['target_percentage'],
+                        "risk_reward_ratio": ai_levels['risk_reward_ratio'],
+                        "days_to_expiry": days_to_expiry,
+                        "trading_plan": {
+                            "entry": f"{action} at ₹{current_price}",
+                            "stop_loss": f"₹{ai_levels['stop_loss']} ({ai_levels['sl_percentage']}%)",
+                            "target": f"₹{ai_levels['target']} ({ai_levels['target_percentage']}%)",
+                            "risk_reward": f"1:{ai_levels['risk_reward_ratio']}",
+                            "expiry": f"{days_to_expiry} days remaining"
+                        }
+                    })
+                except Exception as e:
+                    print(f"Error calculating levels for primary recommendation: {e}")
+            
+            # Add enhanced info
             predictions["training_info"] = training_result
             predictions["auto_trained"] = True
+            predictions["data_sources"] = enhanced_data["data_sources"]
             
             return predictions
             
