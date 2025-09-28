@@ -412,6 +412,88 @@ ws.onmessage = function(event) {
 ### Pivot Points
 **Endpoint:** `GET /api/v1/technical/pivot-points/{symbol}`
 
+## Derivatives Trading
+
+### Get Derivatives Equity Snapshot
+**Endpoint:** `GET /api/v1/derivatives/equity-snapshot`
+
+**Parameters:**
+- `limit` (int, optional): Number of contracts to fetch (default: 20)
+
+**Response:**
+```json
+{
+  "volume": {
+    "data": [
+      {
+        "identifier": "OPTIDXNIFTY30-09-2025PE24800.00",
+        "instrumentType": "OPTIDX",
+        "instrument": "Index Options",
+        "underlying": "NIFTY",
+        "expiryDate": "30-Sep-2025",
+        "optionType": "Put",
+        "strikePrice": 24800,
+        "lastPrice": 145.45,
+        "numberOfContractsTraded": 7562946,
+        "totalTurnover": 483952.91454,
+        "premiumTurnover": 141154748.51454,
+        "openInterest": 69853,
+        "underlyingValue": 24654.7,
+        "pChange": 282.763157894737
+      }
+    ]
+  }
+}
+```
+
+### Get AI Derivatives Trading Calls
+**Endpoint:** `GET /api/v1/derivatives/ai-trading-calls`
+
+**Parameters:**
+- `limit` (int, optional): Number of contracts to analyze (default: 20)
+
+**Response:**
+```json
+{
+  "analysis_timestamp": "2024-01-15T10:30:00",
+  "total_contracts_analyzed": 20,
+  "market_sentiment": "BULLISH",
+  "market_analysis": {
+    "total_calls": 12,
+    "total_puts": 8,
+    "bullish_signals": 15,
+    "bearish_signals": 5,
+    "call_put_ratio": 1.5
+  },
+  "top_ai_recommendations": [
+    {
+      "identifier": "OPTIDXNIFTY30-09-2025PE24800.00",
+      "underlying": "NIFTY",
+      "option_type": "Put",
+      "strike_price": 24800,
+      "expiry_date": "30-Sep-2025",
+      "last_price": 145.45,
+      "price_change_percent": 282.76,
+      "volume": 7562946,
+      "open_interest": 69853,
+      "underlying_value": 24654.7,
+      "ai_score": 85.5,
+      "recommendation": "BUY",
+      "trend": "BEARISH",
+      "risk_level": "LOW",
+      "signals": ["High Volume", "Strong Price Movement", "High Open Interest"]
+    }
+  ],
+  "high_volume_opportunities": [...],
+  "momentum_plays": [...],
+  "trading_strategy": {
+    "primary_focus": "High volume contracts with strong price movement",
+    "risk_management": "Monitor open interest and underlying price movement",
+    "market_outlook": "Current sentiment is bullish"
+  }
+}
+```
+
 ## Enhanced AI Analysis
 
 ## Usage Examples
