@@ -293,8 +293,8 @@ class EquityMLModel:
         df['trend'] = df.apply(get_trend, axis=1)
         df['risk_level'] = pd.cut(df['ai_score'], bins=[0, 33, 66, 100], labels=['HIGH', 'MEDIUM', 'LOW']).astype(str)
         
-        # Top 3 recommendations
-        top_recs = df.nlargest(3, 'ai_score')
+        # Top 3 unique recommendations
+        top_recs = df.drop_duplicates(subset=['symbol']).nlargest(3, 'ai_score')
         
         # Batch process historical data for top symbols to avoid repeated API calls
         top_symbols = top_recs['symbol'].unique()[:3]  # Only top 3 unique symbols
@@ -392,9 +392,12 @@ class EquityMLModel:
         
         market_sentiment = 'BULLISH' if market_analysis['bullish_signals'] > market_analysis['bearish_signals'] else 'BEARISH' if market_analysis['bearish_signals'] > market_analysis['bullish_signals'] else 'NEUTRAL'
         
+        # Ensure unique recommendations
+        unique_recommendations = self._ensure_unique_recommendations(recommendations)
+        
         return {
             'best_trades': best_trades,
-            'top_3_recommendations': recommendations,
+            'top_3_recommendations': unique_recommendations,
             'market_sentiment': market_sentiment,
             'confidence_level': 'HIGH' if market_analysis['avg_ai_score'] > 75 else 'MEDIUM' if market_analysis['avg_ai_score'] > 50 else 'LOW',
             'trading_strategy': f"Focus on {'buying strong performers' if market_sentiment == 'BULLISH' else 'selling weak stocks' if market_sentiment == 'BEARISH' else 'selective trading'}",
@@ -447,6 +450,19 @@ class EquityMLModel:
     def _create_trade_plan(self, row):
         """Legacy method - redirects to optimized version"""
         return self._create_trade_plan_optimized(row)
+    
+    def _ensure_unique_recommendations(self, recommendations):
+        """Ensure unique stock symbols in recommendations list"""
+        seen_symbols = set()
+        unique_recs = []
+        
+        for rec in recommendations:
+            symbol = rec.get('symbol')
+            if symbol and symbol not in seen_symbols:
+                seen_symbols.add(symbol)
+                unique_recs.append(rec)
+        
+        return unique_recs
     
     def load_model(self, filepath):
         """Load trained model"""
