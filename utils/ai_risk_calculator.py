@@ -1,7 +1,7 @@
 import requests
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime
 import time
 import json
 import os
@@ -74,7 +74,7 @@ class AIRiskCalculator:
             session.get('https://www.nseindia.com/market-data/live-equity-market', timeout=15)
             
             to_date = datetime.now()
-            from_date = to_date - timedelta(days=days_back)
+            from_date = to_date
             
             # Determine instrument type
             if symbol in ['NIFTY', 'BANKNIFTY', 'FINNIFTY']:
@@ -359,7 +359,7 @@ class AIRiskCalculator:
             session.get('https://www.nseindia.com/market-data/live-equity-market', timeout=15)
             
             to_date = datetime.now()
-            from_date = to_date - timedelta(days=days_back)
+            from_date = to_date
             
             params = {
                 'symbol': symbol,

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from websocket_streaming import manager
+from ws.websocket_streaming import manager
 from portfolio_manager import PortfolioManager
 from risk_manager import RiskManager
 from nse_client import NSEClient
@@ -8,6 +8,7 @@ from market_scanner import MarketScanner
 from advanced_indicators import AdvancedTechnicalIndicators
 import json
 import asyncio
+from datetime import datetime
 
 router = APIRouter()
 portfolio_manager = PortfolioManager()
@@ -23,7 +24,7 @@ async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:
         while True:
-            data = await websocket.receive_text()
+            data = await websocket.receive_text() 
             message = json.loads(data)
             
             if message.get("action") == "subscribe":
@@ -619,4 +620,82 @@ def test_websocket_connection():
             "step2": "Send: {\"action\": \"subscribe\", \"symbol\": \"RELIANCE\"}",
             "step3": "Receive real-time market updates"
         }
+    }
+
+# Add these endpoints to your main.py router
+
+@router.post("/api/v1/websocket/broadcast")
+async def broadcast_message(broadcast_data: dict):
+    """Broadcast a message to all WebSocket connections"""
+    try:
+        success = await manager.broadcast_json(broadcast_data)
+        
+        return {
+            "status": "success" if success else "failed",
+            "message": "Message broadcasted" if success else "Failed to broadcast",
+            "active_connections": len(manager.active_connections),
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        return {"error": str(e)}
+
+@router.get("/api/v1/websocket/test-broadcast")
+async def test_broadcast():
+    """Send a test broadcast message"""
+    test_data = {
+        "type": "test_alert",
+        "timestamp": datetime.now().isoformat(),
+        "message": "🚀 Test broadcast from server",
+        "data": {
+            "symbol": "NIFTY",
+            "price": 19500.50,
+            "change": "+1.25%"
+        }
+    }
+    
+    success = await manager.broadcast_json(test_data)
+    
+    return {
+        "status": "success" if success else "failed",
+        "test_message_sent": test_data,
+        "active_connections": len(manager.active_connections)
+    }
+
+@router.post("/api/v1/websocket/derivative-alert")
+async def broadcast_derivative_alert(alert_data: dict):
+    """Broadcast derivative trading alerts to WebSocket clients"""
+    try:
+        ws_data = {
+            "type": "derivative_alert",
+            "timestamp": datetime.now().isoformat(),
+            "alert_count": alert_data.get("alert_count", 0),
+            "opportunities": alert_data.get("opportunities", []),
+            "message": alert_data.get("message", "New derivative opportunities detected")
+        }
+        
+        success = await manager.broadcast_json(ws_data)
+        
+        return {
+            "status": "success" if success else "failed",
+            "alert_sent": ws_data,
+            "active_connections": len(manager.active_connections),
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        return {"error": str(e)}
+
+@router.get("/api/v1/websocket/connections")
+def get_websocket_connections():
+    """Get current WebSocket connection information"""
+    return {
+        "active_connections": len(manager.active_connections),
+        "total_subscriptions": len(manager.subscriptions),
+        "connections": [
+            {
+                "subscriptions": list(subs) if subs else []
+            }
+            for subs in manager.subscriptions.values()
+        ]
     }

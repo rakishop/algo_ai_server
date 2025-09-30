@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
 import os
 
@@ -96,7 +96,7 @@ class EnhancedVolumeDetector:
         if df.empty:
             return []
         
-        current_hour = datetime.now().isoformat().hour
+        current_hour = datetime.now().hour
         
         for symbol, current_data in current_volumes.items():
             symbol_df = df[df['symbol'] == symbol].copy()

@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, List, Any
 
 class SpikeTracker:
@@ -28,23 +28,19 @@ class SpikeTracker:
             "options": options_data
         }
         
-        # Keep only last 24 hours
-        cutoff = datetime.now() - timedelta(hours=24)
-        self.history = {k: v for k, v in self.history.items() 
-                       if datetime.fromisoformat(v["timestamp"]) > cutoff}
+        # Keep only recent entries
+        if len(self.history) > 1000:
+            # Keep only last 1000 entries
+            sorted_keys = sorted(self.history.keys())
+            keys_to_keep = sorted_keys[-1000:]
+            self.history = {k: self.history[k] for k in keys_to_keep}
         
         self.save_history()
     
     def detect_period_spikes(self, symbol: str, minutes: int = 5) -> List[Dict]:
-        now = datetime.now()
-        cutoff = now - timedelta(minutes=minutes)
-        
-        # Get snapshots within time period
-        recent_snapshots = []
-        for key, data in self.history.items():
-            if (data["symbol"] == symbol and 
-                datetime.fromisoformat(data["timestamp"]) > cutoff):
-                recent_snapshots.append(data)
+        # Get recent snapshots for symbol (last 10 entries)
+        symbol_snapshots = [data for data in self.history.values() if data["symbol"] == symbol]
+        recent_snapshots = sorted(symbol_snapshots, key=lambda x: x["timestamp"])[-10:]
         
         if len(recent_snapshots) < 2:
             return []

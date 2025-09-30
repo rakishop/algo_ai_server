@@ -3,7 +3,7 @@ from typing import List
 from nse_client import NSEClient
 import requests
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier

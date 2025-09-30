@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 from nse_client import NSEClient
 from config import settings
 import requests
@@ -26,13 +26,12 @@ class SmartAlerts:
             print(f"Error saving alerts: {e}")
         
     def get_ist_time(self):
-        """Get current IST time"""
-        utc_now = datetime.utcnow()
-        return utc_now + timedelta(hours=5, minutes=30)
+        """Get current time"""
+        return datetime.now()
     
     def is_market_open(self):
         """Check if market is open (9:00 AM to 3:30 PM on weekdays)"""
-        now = self.get_ist_time()
+        now = datetime.now()
         
         # Skip weekends
         if now.weekday() >= 5:  # Saturday=5, Sunday=6
@@ -68,7 +67,7 @@ class SmartAlerts:
                 sent_breakouts.add(symbol)
         
         if new_breakouts:
-            message = f"🚀 BREAKOUT ALERT - {self.get_ist_time().strftime('%H:%M')}\n\n"
+            message = f"🚀 BREAKOUT ALERT - {datetime.now().strftime('%H:%M')}\n\n"
             for i, stock in enumerate(new_breakouts, 1):
                 message += f"{i}. {stock.get('symbol')} - NEW 52W HIGH\n"
                 message += f"   💰 ₹{stock.get('ltp', 0):.1f} (+{stock.get('perChange', 0):.1f}%)\n\n"
@@ -77,7 +76,7 @@ class SmartAlerts:
             
             # Save updated alerts
             sent_data['breakouts'] = list(sent_breakouts)
-            sent_data['timestamp'] = self.get_ist_time().isoformat()
+            sent_data['timestamp'] = datetime.now().isoformat()
             self.save_sent_alerts(sent_data)
     
     def unusual_options_activity(self):
@@ -98,7 +97,7 @@ class SmartAlerts:
                 unusual.append(option)
         
         if unusual:
-            message = f"⚡ UNUSUAL OPTIONS - {self.get_ist_time().strftime('%H:%M')}\n\n"
+            message = f"⚡ UNUSUAL OPTIONS - {datetime.now().strftime('%H:%M')}\n\n"
             for i, opt in enumerate(unusual[:3], 1):
                 message += f"{i}. {opt.get('underlying')} {opt.get('strikePrice')} {opt.get('optionType')}\n"
                 message += f"   📊 Vol: {opt.get('numberOfContractsTraded', 0):,}\n"
@@ -128,7 +127,7 @@ class SmartAlerts:
             else:
                 return  # Neutral, no alert
             
-            message = f"📊 MARKET SENTIMENT - {self.get_ist_time().strftime('%H:%M')}\n\n"
+            message = f"📊 MARKET SENTIMENT - {datetime.now().strftime('%H:%M')}\n\n"
             message += f"{sentiment}\n"
             message += f"Advances: {advances} | Declines: {declines}\n"
             message += f"Ratio: {advance_ratio:.1%}"

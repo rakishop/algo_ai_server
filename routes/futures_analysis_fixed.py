@@ -7,7 +7,7 @@ from utils.ai_risk_calculator import AIRiskCalculator
 import warnings
 import os
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 warnings.filterwarnings('ignore')
 
 class FuturesAnalyzer:
@@ -592,9 +592,8 @@ def create_futures_analysis_routes(nse_client):
             
             if symbol_data.empty:
                 # Get historical data for analysis
-                from datetime import datetime, timedelta
                 to_date = datetime.now().strftime("%d-%m-%Y")
-                from_date = (datetime.now() - timedelta(days=180)).strftime("%d-%m-%Y")
+                from_date = datetime.now().strftime("%d-%m-%Y")
                 
                 # For indices, use quote-derivative API instead of historical
                 if symbol in ["NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY"]:

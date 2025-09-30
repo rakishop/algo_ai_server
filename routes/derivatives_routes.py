@@ -667,9 +667,8 @@ def create_derivatives_routes(nse_client):
                         expiry_date = contract.get("expiryDate")
                         
                         if all([symbol, strike_price, expiry_date]):
-                            from datetime import datetime, timedelta
                             to_date = datetime.now().strftime("%d-%m-%Y")
-                            from_date = (datetime.now() - timedelta(days=30)).strftime("%d-%m-%Y")
+                            from_date = datetime.now().strftime("%d-%m-%Y")
                             
                             # Use caching to avoid repeated calls
                             cache_key = f"options_hist_{symbol}_{option_type}_{strike_price}_{expiry_date}"

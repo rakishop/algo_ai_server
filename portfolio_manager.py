@@ -1,6 +1,6 @@
 import json
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, List, Optional
 from dataclasses import dataclass, asdict
 from ml_analyzer import MLStockAnalyzer

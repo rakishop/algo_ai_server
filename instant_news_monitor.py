@@ -1,8 +1,7 @@
 import time
 import json
 import os
-from datetime import datetime, timedelta
-import pytz
+from datetime import datetime
 from real_news_fetcher import RealNewsFetcher
 from news_telegram_alert import send_news_to_telegram
 import requests
@@ -15,12 +14,11 @@ class InstantNewsMonitor:
         self.check_interval = 15  # Check every 15 seconds for real-time alerts
         self.last_summary_time = None
         self.first_message_sent = False
-        self.ist = pytz.timezone('Asia/Kolkata')
+
     
     def get_current_time(self):
         """Get current time in IST"""
-        utc_now = datetime.utcnow()
-        return utc_now + timedelta(hours=5, minutes=30)  # Convert UTC to IST
+        return datetime.now()
     
     def get_ist_time_str(self):
         """Get IST time string for display"""
@@ -90,7 +88,7 @@ class InstantNewsMonitor:
             current_time = self.get_current_time()
             
             # Check if 2 hours passed since last summary
-            if self.last_summary_time and (current_time - self.last_summary_time).total_seconds() < 7200:
+            if self.last_summary_time and current_time.hour != self.last_summary_time.hour:
                 return False
             
             news_data = self.fetcher.get_all_news()
@@ -219,11 +217,8 @@ class InstantNewsMonitor:
                                 if news['title'] not in seen_news:
                                     recent_news.append(news)
                             else:
-                                # Make both datetimes timezone-naive for comparison
-                                current_naive = current_time.replace(tzinfo=None)
-                                news_naive = news_time.replace(tzinfo=None) if news_time.tzinfo else news_time
-                                
-                                if (current_naive - news_naive).total_seconds() <= 300:
+                                # Simple time comparison
+                                if current_time.minute - news_time.minute <= 5:
                                     if news['title'] not in seen_news:
                                         recent_news.append(news)
                         

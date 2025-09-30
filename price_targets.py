@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import LinearRegression
-from datetime import datetime, timedelta
+from datetime import datetime
 
 class PriceTargets:
     def __init__(self):

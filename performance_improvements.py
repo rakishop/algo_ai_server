@@ -4,7 +4,7 @@ import redis
 import asyncio
 from fastapi import BackgroundTasks
 import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
 
 # 1. Redis Caching for Ultra-Fast Response

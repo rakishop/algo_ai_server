@@ -1,4 +1,5 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+import json
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import os
@@ -15,7 +16,7 @@ from routes.equity_routes import create_equity_routes
 from routes.futures_analysis_fixed import create_futures_analysis_routes
 from option_chain_endpoint import create_option_chain_routes
 from charting_endpoint import create_charting_routes
-from websocket_streaming import manager
+from ws.websocket_streaming import manager
 from portfolio_manager import PortfolioManager
 from risk_manager import RiskManager
 import asyncio
@@ -23,6 +24,7 @@ from typing import List, Dict
 import schedule
 import threading
 import time
+from datetime import datetime
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -41,11 +43,27 @@ async def lifespan(app: FastAPI):
         try:
             from auto_stock_alerts import send_stock_alert
             send_stock_alert()
-            print(f"✅ Telegram alert sent at {datetime.now().strftime('%H:%M:%S')}")
+            print(f"Telegram alert sent at {datetime.now().strftime('%H:%M:%S')}")
         except Exception as e:
-            print(f"❌ Telegram alert failed: {e}")
+            print(f"Telegram alert failed: {e}")
     
-    # Start Volume alerts scheduler
+    # Start Intelligent Derivative Analysis scheduler
+    def run_intelligent_derivative_analysis():
+        try:
+            from analyzers.intelligent_derivative_analyzer import IntelligentDerivativeAnalyzer
+            analyzer = IntelligentDerivativeAnalyzer()
+            if analyzer.is_market_open():
+                result = analyzer.run_intelligent_analysis(websocket_manager=manager)
+                if result:
+                    print(f"Intelligent derivative alert sent at {datetime.now().strftime('%H:%M:%S')}")
+                else:
+                    print(f"No new derivative opportunities at {datetime.now().strftime('%H:%M:%S')}")
+            else:
+                print(f"Market closed - skipping derivative analysis at {datetime.now().strftime('%H:%M:%S')}")
+        except Exception as e:
+            print(f"Intelligent derivative analysis failed: {e}")
+    
+    # Start Volume alerts scheduler (reduced frequency)
     def run_volume_alerts():
         try:
             from volume_alert_system import VolumeAlertSystem
@@ -53,23 +71,24 @@ async def lifespan(app: FastAPI):
             if alert_system.is_market_open():
                 from volume_alert_system import send_volume_alert
                 send_volume_alert()
-                print(f"✅ Volume alert checked at {datetime.now().strftime('%H:%M:%S')}")
+                print(f"Volume alert checked at {datetime.now().strftime('%H:%M:%S')}")
             else:
-                print(f"📊 Market closed - skipping volume check at {datetime.now().strftime('%H:%M:%S')}")
+                print(f"Market closed - skipping volume check at {datetime.now().strftime('%H:%M:%S')}")
         except Exception as e:
-            print(f"❌ Volume alert failed: {e}")
+            print(f"Volume alert failed: {e}")
     
     schedule.every(30).minutes.do(run_telegram_alerts)
-    schedule.every(3).minutes.do(run_volume_alerts)
+    schedule.every(15).minutes.do(run_intelligent_derivative_analysis)  # Intelligent analysis every 15 minutes
+    schedule.every(10).minutes.do(run_volume_alerts)  # Reduced from 3 to 10 minutes
     
     # Smart alerts every 15 minutes
     def run_smart_alerts():
         try:
             from smart_alerts import run_smart_alerts
             run_smart_alerts()
-            print(f"✅ Smart alerts checked at {datetime.now().strftime('%H:%M:%S')}")
+            print(f"Smart alerts checked at {datetime.now().strftime('%H:%M:%S')}")
         except Exception as e:
-            print(f"❌ Smart alerts failed: {e}")
+            print(f"Smart alerts failed: {e}")
     
     schedule.every(15).minutes.do(run_smart_alerts)
     
@@ -78,9 +97,9 @@ async def lifespan(app: FastAPI):
         try:
             from news_telegram_alert import send_news_to_telegram
             send_news_to_telegram()
-            print(f"✅ News alert sent at {datetime.now().strftime('%H:%M:%S')}")
+            print(f"News alert sent at {datetime.now().strftime('%H:%M:%S')}")
         except Exception as e:
-            print(f"❌ News alert failed: {e}")
+            print(f"News alert failed: {e}")
     
     schedule.every(60).minutes.do(run_news_alerts)
     
@@ -89,9 +108,9 @@ async def lifespan(app: FastAPI):
         try:
             from sector_news_monitor import monitor_sector_news
             alerts_sent = monitor_sector_news()
-            print(f"✅ Sector alerts: {alerts_sent} sent at {datetime.now().strftime('%H:%M:%S')}")
+            print(f"Sector alerts: {alerts_sent} sent at {datetime.now().strftime('%H:%M:%S')}")
         except Exception as e:
-            print(f"❌ Sector alerts failed: {e}")
+            print(f"Sector alerts failed: {e}")
     
     schedule.every(2).hours.do(run_sector_alerts)
     
@@ -101,14 +120,14 @@ async def lifespan(app: FastAPI):
             from free_twitter_scraper import scrape_free_tweets
             result = scrape_free_tweets()
             if result:
-                print(f"✅ Free Twitter alert sent at {datetime.now().strftime('%H:%M:%S')}")
+                print(f"Free Twitter alert sent at {datetime.now().strftime('%H:%M:%S')}")
         except Exception as e:
-            print(f"❌ Free Twitter scraper failed: {e}")
+            print(f"Free Twitter scraper failed: {e}")
     
     schedule.every(10).minutes.do(run_twitter_monitor)
     
     def run_scheduler():
-        print("Starting schedulers (Telegram: 30min, Volume: 3min)...")
+        print("Starting schedulers (Telegram: 30min, Derivatives: 15min, Volume: 10min)...")
         while True:
             try:
                 schedule.run_pending()
@@ -136,10 +155,11 @@ async def lifespan(app: FastAPI):
     keep_alive = KeepAlive(server_url)
     keep_alive.start()
     
-    print(f"📱 Telegram scheduler started at {datetime.now().strftime('%H:%M:%S')}")
-    print(f"📊 Volume alert scheduler started (every 3 minutes)")
-    print(f"⚡ Instant news monitor started (every 1 minute)")
-    print(f"🔄 Keep-alive service started for {server_url}")
+    print(f"Telegram scheduler started at {datetime.now().strftime('%H:%M:%S')}")
+    print(f"Intelligent derivative analysis started (every 15 minutes during market hours)")
+    print(f"Volume alert scheduler started (every 10 minutes)")
+    print(f"Instant news monitor started (every 1 minute)")
+    print(f"Keep-alive service started for {server_url}")
     yield
     # Shutdown
     stream_task.cancel()
@@ -172,7 +192,6 @@ nse_client = NSEClient()
 # Create shared instances to avoid multiple instantiation
 from data_processor import DataProcessor
 from ml_analyzer import MLStockAnalyzer
-from datetime import datetime
 processor = DataProcessor()
 ml_analyzer = MLStockAnalyzer()
 
@@ -219,6 +238,25 @@ def welcome():
 @app.get("/test")
 def test_endpoint():
     return {"status": "working", "endpoints": ["scalping-analysis", "options-strategies"]}
+
+@app.get("/test-websocket-broadcast")
+async def test_websocket_broadcast():
+    """Test WebSocket broadcast functionality"""
+    test_data = {
+        "type": "test_broadcast",
+        "message": "Test WebSocket broadcast",
+        "timestamp": datetime.now().isoformat(),
+        "connections": len(manager.active_connections)
+    }
+    
+    success = await manager.broadcast_json(test_data)
+    
+    return {
+        "status": "success" if success else "no_connections",
+        "active_connections": len(manager.active_connections),
+        "broadcast_sent": success,
+        "test_data": test_data
+    }
 
 @app.get("/api/v1/ai/scalping-test")
 def get_scalping_analysis(
@@ -764,6 +802,54 @@ async def trigger_smart_alerts():
     except Exception as e:
         return {"error": str(e)}
 
+@app.get("/api/v1/ai/derivative-opportunities")
+async def get_derivative_opportunities():
+    """Get current derivative opportunities without sending notifications"""
+    try:
+        from analyzers.intelligent_derivative_analyzer import IntelligentDerivativeAnalyzer
+        
+        analyzer = IntelligentDerivativeAnalyzer()
+        
+        # Fetch and analyze data
+        all_data = analyzer.fetch_all_derivative_data()
+        opportunities = analyzer.extract_opportunities_from_data(all_data)
+        best_opportunities = analyzer.compare_with_previous_analysis(opportunities)
+        
+        # Convert opportunities to dict format
+        opportunities_data = []
+        for opp in best_opportunities[:10]:  # Top 10
+            opportunities_data.append({
+                "symbol": opp.symbol,
+                "option_type": opp.option_type,
+                "strike_price": opp.strike_price,
+                "expiry_date": opp.expiry_date,
+                "current_price": opp.current_price,
+                "price_change": opp.price_change,
+                "volume": opp.volume,
+                "open_interest": opp.open_interest,
+                "ai_score": opp.ai_score,
+                "recommendation": opp.recommendation,
+                "confidence": opp.confidence,
+                "reasons": opp.reasons,
+                "stop_loss": opp.stop_loss,
+                "target": opp.target,
+                "risk_reward_ratio": opp.risk_reward_ratio
+            })
+        
+        return {
+            "timestamp": datetime.now().isoformat(),
+            "total_opportunities_found": len(opportunities),
+            "high_confidence_opportunities": len(best_opportunities),
+            "market_open": analyzer.is_market_open(),
+            "opportunities": opportunities_data,
+            "analysis_criteria": {
+                "min_confidence_threshold": analyzer.min_confidence_threshold,
+                "min_ai_score_threshold": analyzer.min_ai_score_threshold
+            }
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
 @app.get("/api/v1/ai/volume-alert")
 async def send_volume_alert_endpoint():
     """Manually trigger volume spike alert"""
@@ -775,6 +861,29 @@ async def send_volume_alert_endpoint():
             "status": "success" if result else "no_spikes",
             "message": "Volume alert sent" if result else "No volume spikes detected",
             "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/ai/intelligent-derivative-analysis")
+async def run_intelligent_derivative_analysis():
+    """Manually trigger intelligent derivative analysis"""
+    try:
+        from analyzers.intelligent_derivative_analyzer import IntelligentDerivativeAnalyzer
+        
+        analyzer = IntelligentDerivativeAnalyzer()
+        
+        # Force analysis regardless of timing for manual trigger
+        analyzer.last_analysis_time = None
+        
+        result = analyzer.run_intelligent_analysis(websocket_manager=manager)
+        
+        return {
+            "status": "success" if result else "no_opportunities",
+            "message": "High-confidence opportunities found and sent" if result else "No new high-confidence opportunities found",
+            "timestamp": datetime.now().isoformat(),
+            "analysis_type": "intelligent_derivative_analysis",
+            "notification_sent": result
         }
     except Exception as e:
         return {"error": str(e)}
@@ -816,10 +925,7 @@ async def send_telegram_alert():
         ai_losers = sorted(ai_losers, key=lambda x: x.get('breakout_score', x.get('momentum_score', 0)), reverse=True)[:4]
         
         # Create AI-powered message
-        # Get IST time
-        utc_now = datetime.utcnow()
-        ist_time = utc_now + timedelta(hours=5, minutes=30)
-        message = f"🤖 AI MARKET ANALYSIS - {ist_time.strftime('%H:%M')}\n\n"
+        message = f"🤖 AI MARKET ANALYSIS - {datetime.now().strftime('%H:%M')}\n\n"
         message += "📈 TOP 5 AI BREAKOUT GAINERS\n"
         for i, stock in enumerate(ai_gainers, 1):
             score = stock.get('breakout_score', stock.get('momentum_score', 0))
@@ -856,6 +962,49 @@ def get_option_chain_info(symbol: str = "NIFTY"):
     """Get option chain contract info"""
     return nse_client.get_option_chain_info(symbol.upper())
 
+@app.get("/api/v1/ai/test-intelligent-analyzer")
+async def test_intelligent_analyzer():
+    """Test the intelligent derivative analyzer components"""
+    try:
+        from analyzers.intelligent_derivative_analyzer import IntelligentDerivativeAnalyzer
+        
+        analyzer = IntelligentDerivativeAnalyzer()
+        
+        # Test data fetching
+        data = analyzer.fetch_all_derivative_data()
+        data_sources = [k for k, v in data.items() if v and k != 'timestamp']
+        
+        # Test opportunity extraction
+        opportunities = analyzer.extract_opportunities_from_data(data)
+        
+        # Test comparison
+        best_opportunities = analyzer.compare_with_previous_analysis(opportunities)
+        
+        return {
+            "status": "success",
+            "test_results": {
+                "data_sources_fetched": len(data_sources),
+                "data_sources": data_sources,
+                "total_opportunities": len(opportunities),
+                "high_confidence_opportunities": len(best_opportunities),
+                "market_open": analyzer.is_market_open(),
+                "should_analyze": analyzer.should_analyze()
+            },
+            "sample_opportunities": [
+                {
+                    "symbol": opp.symbol,
+                    "option_type": opp.option_type,
+                    "ai_score": opp.ai_score,
+                    "confidence": opp.confidence,
+                    "recommendation": opp.recommendation
+                }
+                for opp in best_opportunities[:3]
+            ],
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
 @app.get("/api/v1/futures/master-quote")
 def get_futures_master_quote():
     """Get all future stock symbols from NSE master-quote API"""
@@ -874,9 +1023,9 @@ def get_options_historical(
 ):
     """Get options historical data with AI analysis"""
     try:
-        from datetime import datetime, timedelta
+        from datetime import datetime
         to_date = datetime.now().strftime("%d-%m-%Y")
-        from_date = (datetime.now() - timedelta(days=days)).strftime("%d-%m-%Y")
+        from_date = datetime.now().strftime("%d-%m-%Y")
         
         hist_data = nse_client.get_options_historical_data(symbol, option_type, strike_price, expiry_date, from_date, to_date)
         if "error" in hist_data:
@@ -944,3 +1093,4 @@ def analyze_option_chain_legacy(
         }
     
     return result
+

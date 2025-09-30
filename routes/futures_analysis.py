@@ -7,7 +7,7 @@ from utils.ai_risk_calculator import AIRiskCalculator
 import warnings
 import os
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 warnings.filterwarnings('ignore')
 
 class FuturesAnalyzer:
