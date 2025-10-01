@@ -679,7 +679,7 @@ async def telegram_poll():
     """Poll for new Telegram messages and respond"""
     try:
         import requests
-        from telegram_handler import TelegramHandler
+        from notifications.telegram_handler import TelegramHandler
         
         handler = TelegramHandler()
         url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/getUpdates"

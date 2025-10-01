@@ -1,7 +1,7 @@
 import requests
 import time
 from config import settings
-from telegram_handler import TelegramHandler
+from notifications.telegram_handler import TelegramHandler
 
 class TelegramBotServer:
     def __init__(self):

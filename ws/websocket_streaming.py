@@ -138,7 +138,7 @@ class WebSocketManager:
                             
                             # Send to Telegram using existing handler
                             if "error" not in recommendations and "top_3_recommendations" in recommendations:
-                                from telegram_handler import TelegramHandler
+                                from notifications.telegram_handler import TelegramHandler
                                 tg = TelegramHandler()
                                 msg = f"🔔 Derivative Alert\n{recommendations['top_3_recommendations'][0]['recommendation']}\n{datetime.now().strftime('%H:%M:%S')}"
                                 tg.send_message(self.chat_id, msg)
