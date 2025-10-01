@@ -56,6 +56,7 @@ async def lifespan(app: FastAPI):
                 result = analyzer.run_intelligent_analysis(websocket_manager=manager)
                 if result:
                     print(f"Intelligent derivative alert sent at {datetime.now().strftime('%H:%M:%S')}")
+                    print(f"WebSocket connections: {len(manager.active_connections)}")
                 else:
                     print(f"No new derivative opportunities at {datetime.now().strftime('%H:%M:%S')}")
             else:
@@ -78,7 +79,7 @@ async def lifespan(app: FastAPI):
             print(f"Volume alert failed: {e}")
     
     schedule.every(30).minutes.do(run_telegram_alerts)
-    schedule.every(15).minutes.do(run_intelligent_derivative_analysis)  # Intelligent analysis every 15 minutes
+    schedule.every(3).minutes.do(run_intelligent_derivative_analysis)  # Intelligent analysis every 15 minutes
     schedule.every(10).minutes.do(run_volume_alerts)  # Reduced from 3 to 10 minutes
     
     # Smart alerts every 15 minutes
@@ -239,24 +240,6 @@ def welcome():
 def test_endpoint():
     return {"status": "working", "endpoints": ["scalping-analysis", "options-strategies"]}
 
-@app.get("/test-websocket-broadcast")
-async def test_websocket_broadcast():
-    """Test WebSocket broadcast functionality"""
-    test_data = {
-        "type": "test_broadcast",
-        "message": "Test WebSocket broadcast",
-        "timestamp": datetime.now().isoformat(),
-        "connections": len(manager.active_connections)
-    }
-    
-    success = await manager.broadcast_json(test_data)
-    
-    return {
-        "status": "success" if success else "no_connections",
-        "active_connections": len(manager.active_connections),
-        "broadcast_sent": success,
-        "test_data": test_data
-    }
 
 @app.get("/api/v1/ai/scalping-test")
 def get_scalping_analysis(
@@ -957,53 +940,52 @@ async def send_telegram_alert():
     except Exception as e:
         return {"error": str(e)}
 
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            # Handle incoming messages if needed
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+
+@app.post("/test-broadcast")
+async def test_broadcast(payload: dict):
+    """Test endpoint to broadcast message to all WebSocket clients"""
+    try:
+        success = await manager.broadcast_json(payload)
+        return {"status": "success" if success else "no_connections", "connections": len(manager.active_connections), "payload": payload}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/ai/force-derivative-alert")
+async def force_derivative_alert():
+    """Force derivative analysis and WebSocket broadcast for testing"""
+    try:
+        from analyzers.intelligent_derivative_analyzer import IntelligentDerivativeAnalyzer
+        analyzer = IntelligentDerivativeAnalyzer()
+        
+        # Force analysis regardless of timing
+        analyzer.last_analysis_time = None
+        
+        # Run analysis with server's manager in force mode
+        result = analyzer.run_intelligent_analysis(websocket_manager=manager, force=True)
+        
+        return {
+            "status": "success" if result else "no_opportunities",
+            "message": "Analysis completed and broadcast sent" if result else "No opportunities found",
+            "websocket_connections": len(manager.active_connections),
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
 @app.get("/api/option-chain-contract-info")
 def get_option_chain_info(symbol: str = "NIFTY"):
     """Get option chain contract info"""
     return nse_client.get_option_chain_info(symbol.upper())
 
-@app.get("/api/v1/ai/test-intelligent-analyzer")
-async def test_intelligent_analyzer():
-    """Test the intelligent derivative analyzer components"""
-    try:
-        from analyzers.intelligent_derivative_analyzer import IntelligentDerivativeAnalyzer
-        
-        analyzer = IntelligentDerivativeAnalyzer()
-        
-        # Test data fetching
-        data = analyzer.fetch_all_derivative_data()
-        data_sources = [k for k, v in data.items() if v and k != 'timestamp']
-        
-        # Test opportunity extraction
-        opportunities = analyzer.extract_opportunities_from_data(data)
-        
-        # Test comparison
-        best_opportunities = analyzer.compare_with_previous_analysis(opportunities)
-        
-        return {
-            "status": "success",
-            "test_results": {
-                "data_sources_fetched": len(data_sources),
-                "data_sources": data_sources,
-                "total_opportunities": len(opportunities),
-                "high_confidence_opportunities": len(best_opportunities),
-                "market_open": analyzer.is_market_open(),
-                "should_analyze": analyzer.should_analyze()
-            },
-            "sample_opportunities": [
-                {
-                    "symbol": opp.symbol,
-                    "option_type": opp.option_type,
-                    "ai_score": opp.ai_score,
-                    "confidence": opp.confidence,
-                    "recommendation": opp.recommendation
-                }
-                for opp in best_opportunities[:3]
-            ],
-            "timestamp": datetime.now().isoformat()
-        }
-    except Exception as e:
-        return {"error": str(e)}
 
 @app.get("/api/v1/futures/master-quote")
 def get_futures_master_quote():

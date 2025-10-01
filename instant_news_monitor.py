@@ -67,7 +67,7 @@ class InstantNewsMonitor:
                     
                     url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage"
                     data = {
-                        "chat_id": settings.telegram_chat_id,
+                        "chat_id": settings.telegram_news_channel_id,
                         "text": message,
                         "parse_mode": "HTML"
                     }
@@ -107,7 +107,7 @@ class InstantNewsMonitor:
             
             url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage"
             data = {
-                "chat_id": settings.telegram_chat_id,
+                "chat_id": settings.telegram_news_channel_id,
                 "text": header_msg,
                 "parse_mode": "HTML"
             }
@@ -164,7 +164,7 @@ class InstantNewsMonitor:
                 
                 url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage"
                 data = {
-                    "chat_id": settings.telegram_chat_id,
+                    "chat_id": settings.telegram_news_channel_id,
                     "text": message,
                     "parse_mode": "HTML"
                 }

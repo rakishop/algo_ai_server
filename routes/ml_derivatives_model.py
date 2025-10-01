@@ -23,7 +23,7 @@ class DerivativesMLModel:
         if os.path.exists(self.model_file):
             load_result = self.load_model(self.model_file)
             if load_result.get("status") == "loaded":
-                print(f"Loaded existing model: {load_result}")
+                
                 self.last_training_time = datetime.now().timestamp()
         
     def prepare_features(self, data):

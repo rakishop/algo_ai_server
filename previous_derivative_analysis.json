@@ -1,0 +1,89 @@
+{
+  "timestamp": "2025-10-01T22:39:18.107988",
+  "opportunities": [
+    {
+      "symbol": "NIFTY",
+      "option_type": "Call",
+      "strike_price": 24800,
+      "expiry_date": "07-Oct-2025",
+      "current_price": 140.7,
+      "price_change": 80.38461538461539,
+      "volume": 3394414,
+      "open_interest": 56709,
+      "ai_score": 73.55000000000001,
+      "recommendation": "BUY CALL",
+      "confidence": 89.42,
+      "reasons": [
+        "AI model recommends this opportunity",
+        "High volume activity",
+        "Strong price momentum"
+      ],
+      "stop_loss": 119.59,
+      "target": 182.91,
+      "risk_reward_ratio": 1.9995262908574154
+    },
+    {
+      "symbol": "NIFTY",
+      "option_type": "Call",
+      "strike_price": 24700,
+      "expiry_date": "07-Oct-2025",
+      "current_price": 216,
+      "price_change": 77.12177121771218,
+      "volume": 2877462,
+      "open_interest": 45225,
+      "ai_score": 75.5,
+      "recommendation": "BUY CALL",
+      "confidence": 90.2,
+      "reasons": [
+        "AI model recommends this opportunity",
+        "High volume activity",
+        "Strong price momentum"
+      ],
+      "stop_loss": 183.6,
+      "target": 280.8,
+      "risk_reward_ratio": 2.0
+    },
+    {
+      "symbol": "NIFTY",
+      "option_type": "Call",
+      "strike_price": 24700,
+      "expiry_date": "07-Oct-2025",
+      "current_price": 216,
+      "price_change": 77.12177121771218,
+      "volume": 2877462,
+      "open_interest": 45225,
+      "ai_score": 75.5,
+      "recommendation": "BUY CALL",
+      "confidence": 90.2,
+      "reasons": [
+        "AI model recommends this opportunity",
+        "High volume activity",
+        "Strong price momentum"
+      ],
+      "stop_loss": 183.6,
+      "target": 280.8,
+      "risk_reward_ratio": 2.0
+    },
+    {
+      "symbol": "NIFTY",
+      "option_type": "Call",
+      "strike_price": 24800,
+      "expiry_date": "07-Oct-2025",
+      "current_price": 140.7,
+      "price_change": 80.38461538461536,
+      "volume": 3394414,
+      "open_interest": 56709,
+      "ai_score": 73.55000000000001,
+      "recommendation": "BUY CALL",
+      "confidence": 89.42,
+      "reasons": [
+        "AI model recommends this opportunity",
+        "High volume activity",
+        "Strong price momentum"
+      ],
+      "stop_loss": 119.59,
+      "target": 182.91,
+      "risk_reward_ratio": 1.9995262908574154
+    }
+  ]
+}

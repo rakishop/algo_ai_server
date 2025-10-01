@@ -43,7 +43,8 @@ def send_news_to_telegram():
         message += f"Total News: {news_data.get('total_news', 0)} sources"
         
         # Send to News Channel
-        news_channel = settings.telegram_news_channel_id or "@MyAlgoFaxNews"
+        news_channel = settings.telegram_news_channel_id
+        print(f"Using news channel ID: {news_channel}")
         url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage"
         data = {"chat_id": news_channel, "text": message}
         

@@ -15,6 +15,7 @@ import numpy as np
 from config import settings
 from nse_client import NSEClient
 import numpy as np
+from ws.websocket_streaming import manager
 
 @dataclass
 class DerivativeOpportunity:
@@ -297,7 +298,7 @@ class IntelligentDerivativeAnalyzer:
             # Convert probability to score (30-95 range)
             ml_score = 30 + (ml_probability * 65)
             
-            print(f"ML Score: {ml_score:.1f} (probability: {ml_probability:.3f})")
+           # print(f"ML Score: {ml_score:.1f} (probability: {ml_probability:.3f})")
             return ml_score
             
         except Exception as e:
@@ -574,10 +575,18 @@ class IntelligentDerivativeAnalyzer:
             # Use provided manager or import from ws module
             if websocket_manager:
                 manager = websocket_manager
-                print(f"Using provided manager with {len(manager.active_connections)} active connections")
+                print(f"Using provided manager {id(manager)} with {len(manager.active_connections)} active connections")
+                print(f"Manager type: {type(manager)}")
             else:
                 from ws.websocket_streaming import manager
-                print(f"Using imported manager with {len(manager.active_connections)} active connections")
+                print(f"Using imported manager {id(manager)} with {len(manager.active_connections)} active connections")
+                print(f"Manager type: {type(manager)}")
+            
+            # Debug: Check if manager has the connections attribute
+            print(f"Manager has active_connections attr: {hasattr(manager, 'active_connections')}")
+            if hasattr(manager, 'active_connections'):
+                print(f"active_connections type: {type(manager.active_connections)}")
+                print(f"active_connections content: {manager.active_connections}")
             
             import asyncio
             
@@ -607,26 +616,37 @@ class IntelligentDerivativeAnalyzer:
                 ]
             }
             
-            print(f"WebSocket Data - Strategy: {analysis_data['best_strategy'][:50]}...")
-            print(f"WebSocket Data - Market Sentiment: {analysis_data['market_sentiment']}")
+            
             print(f"Complete WebSocket payload:")
-            print(json.dumps(ws_data, indent=2))
+       
             
             connection_count = len(manager.active_connections)
+            print(f"Active WebSocket connections ({connection_count}):")
+            for i, conn in enumerate(manager.active_connections, 1):
+                print(f"  {i}. {conn.client.host}:{conn.client.port}")
             
             if connection_count > 0:
                 try:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    success = loop.run_until_complete(manager.broadcast_json(ws_data))
-                    loop.close()
-                    
-                    if success:
-                        print(f"WebSocket alert SENT to {connection_count} connections")
+                    # Use existing event loop instead of creating new one
+                    try:
+                        loop = asyncio.get_running_loop()
+                        task = loop.create_task(manager.broadcast_json(ws_data))
+                        # Don't wait for completion in sync context
+                        print(f"WebSocket broadcast task created for {connection_count} connections")
                         return True
-                    else:
-                        print(f"WebSocket alert failed to send")
-                        return False
+                    except RuntimeError:
+                        # No running loop, create new one
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        success = loop.run_until_complete(manager.broadcast_json(ws_data))
+                        loop.close()
+                        
+                        if success:
+                            print(f"WebSocket alert SENT to {connection_count} connections")
+                            return True
+                        else:
+                            print(f"WebSocket alert failed to send")
+                            return False
                         
                 except Exception as e:
                     print(f"WebSocket async error: {e}")
@@ -726,6 +746,7 @@ class IntelligentDerivativeAnalyzer:
         market_end = now.replace(hour=15, minute=30, second=0, microsecond=0)
         
         return market_start <= now <= market_end
+        #return True
     
     def should_analyze(self) -> bool:
         """Check if analysis should be performed"""
@@ -818,7 +839,7 @@ class IntelligentDerivativeAnalyzer:
         except Exception as e:
             print(f"Warning: ML model training failed: {e}")
     
-    def run_intelligent_analysis(self, is_urgent: bool = False, websocket_manager=None) -> bool:
+    def run_intelligent_analysis(self, is_urgent: bool = False, websocket_manager=None, force: bool = False) -> bool:
         """Run complete intelligent analysis with ML integration"""
         if not is_urgent and not self.should_analyze():
             print(f"Skipping analysis - Market closed or too soon (last: {self.last_analysis_time})")
@@ -844,8 +865,12 @@ class IntelligentDerivativeAnalyzer:
             # 3. Train ML model with current data (background)
             self.train_ml_model_with_current_data(opportunities)
             
-            # 4. Compare with previous analysis
-            best_opportunities = self.compare_with_previous_analysis(opportunities)
+            # 4. Compare with previous analysis (or force top opportunities)
+            if force:
+                best_opportunities = sorted(opportunities, key=lambda x: x.confidence, reverse=True)[:3]
+                print(f"FORCE MODE: Using top {len(best_opportunities)} opportunities")
+            else:
+                best_opportunities = self.compare_with_previous_analysis(opportunities)
             
             if not best_opportunities:
                 print("No new or improved opportunities found")
