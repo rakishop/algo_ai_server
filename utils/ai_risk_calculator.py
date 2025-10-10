@@ -348,6 +348,7 @@ class AIRiskCalculator:
     def get_stock_historical_data(self, symbol, days_back=60):
         """Get stock historical data from NSE API"""
         try:
+            print(f"Fetching historical data for {symbol}")
             session = requests.Session()
             session.headers.update({
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
@@ -358,8 +359,9 @@ class AIRiskCalculator:
             })
             session.get('https://www.nseindia.com/market-data/live-equity-market', timeout=15)
             
+            from datetime import timedelta
             to_date = datetime.now()
-            from_date = to_date
+            from_date = to_date - timedelta(days=days_back)
             
             params = {
                 'symbol': symbol,
@@ -367,7 +369,7 @@ class AIRiskCalculator:
                 'from': from_date.strftime('%d-%m-%Y'),
                 'to': to_date.strftime('%d-%m-%Y')
             }
-            print(params)
+            print("futures data param:",params)
             response = session.get(self.stock_historical_url, params=params, timeout=15)
             
             if response.status_code != 200:
@@ -620,17 +622,17 @@ class AIRiskCalculator:
             risk_reward = actual_target_pct / actual_sl_pct if actual_sl_pct > 0 else 2.0
             
             return {
-                "stop_loss": round(stop_loss, 2),
-                "target": round(target, 2),
-                "sl_percentage": round(actual_sl_pct, 1),
-                "target_percentage": round(actual_target_pct, 1),
-                "atr": round(atr, 2),
-                "volatility": round(volatility, 1),
-                "support": round(support, 2),
-                "resistance": round(resistance, 2),
-                "risk_reward_ratio": round(risk_reward, 2),
-                "momentum": round(momentum, 2),
-                "trend_strength": round(trend_strength, 2),
+                "stop_loss": float(round(stop_loss, 2)),
+                "target": float(round(target, 2)),
+                "sl_percentage": float(round(actual_sl_pct, 1)),
+                "target_percentage": float(round(actual_target_pct, 1)),
+                "atr": float(round(atr, 2)),
+                "volatility": float(round(volatility, 1)),
+                "support": float(round(support, 2)),
+                "resistance": float(round(resistance, 2)),
+                "risk_reward_ratio": float(round(risk_reward, 2)),
+                "momentum": float(round(momentum, 2)),
+                "trend_strength": float(round(trend_strength, 2)),
                 "data_source": "historical_ai_analysis"
             }
         
@@ -662,15 +664,15 @@ class AIRiskCalculator:
             target = current_price * (1 - target_pct/100)
         
         return {
-            "stop_loss": round(stop_loss, 2),
-            "target": round(target, 2),
-            "sl_percentage": round(sl_pct, 1),
-            "target_percentage": round(target_pct, 1),
-            "atr": round(current_price * (vol/100) * 0.02, 2),
-            "volatility": vol,
-            "support": round(current_price * 0.97, 2),
-            "resistance": round(current_price * 1.03, 2),
-            "risk_reward_ratio": round(target_multiplier, 2),
+            "stop_loss": float(round(stop_loss, 2)),
+            "target": float(round(target, 2)),
+            "sl_percentage": float(round(sl_pct, 1)),
+            "target_percentage": float(round(target_pct, 1)),
+            "atr": float(round(current_price * (vol/100) * 0.02, 2)),
+            "volatility": float(vol),
+            "support": float(round(current_price * 0.97, 2)),
+            "resistance": float(round(current_price * 1.03, 2)),
+            "risk_reward_ratio": float(round(target_multiplier, 2)),
             "data_source": "enhanced_static_calculation"
         }
         

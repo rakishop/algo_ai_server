@@ -575,42 +575,84 @@ def create_futures_analysis_routes(nse_client):
             # Get futures data for the symbol
             oi_data = nse_client.get_oi_spurts_contracts()
             df = analyzer.extract_futures_data(oi_data)
-            
+       
             symbol = symbol.upper()
-            
-            # Check if symbol exists in master-quote first (skip for indices)
-            if symbol not in ["NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY"]:
-                master_quote = nse_client.get_futures_master_quote()
-                if "error" not in master_quote and symbol not in master_quote:
+  
+            # Check if symbol exists in available symbols
+            underlying_info = nse_client.get_underlying_information()
+           
+            if "error" not in underlying_info and "data" in underlying_info:
+                all_symbols = []
+                if "IndexList" in underlying_info["data"]:
+                    all_symbols.extend([idx["symbol"] for idx in underlying_info["data"]["IndexList"]])
+                if "UnderlyingList" in underlying_info["data"]:
+                    all_symbols.extend([stock["symbol"] for stock in underlying_info["data"]["UnderlyingList"]])
+                
+                if symbol not in all_symbols:
                     return {
                         "error": f"Symbol {symbol} not available for futures trading",
-                        "available_symbols": master_quote[:20] if isinstance(master_quote, list) else []
+                        "available_symbols": all_symbols[:20]
                     }
             
             # Find the symbol in futures data
             symbol_data = df[df["symbol"] == symbol]
-            
+         
             if symbol_data.empty:
                 # Get historical data for analysis
+                from datetime import timedelta
                 to_date = datetime.now().strftime("%d-%m-%Y")
-                from_date = datetime.now().strftime("%d-%m-%Y")
+                from_date = (datetime.now() - timedelta(days=60)).strftime("%d-%m-%Y")
                 
-                # For indices, use quote-derivative API instead of historical
-                if symbol in ["NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY"]:
-                    quote_data = nse_client.get_quote_derivative(symbol)
-                    if "error" in quote_data:
-                        return {"error": f"Could not fetch data for {symbol}"}
+                # Check if it's an index from the available symbols
+                is_index = False
+                if "data" in underlying_info and "IndexList" in underlying_info["data"]:
+                    index_symbols = [idx["symbol"] for idx in underlying_info["data"]["IndexList"]]
+                    is_index = symbol in index_symbols
+                
+                if is_index:
+                    # For indices, get the index value from allIndices API
+              
+                    indices_data = nse_client.get_all_indices()
+  
+                    if "error" in indices_data:
+                        return {"error": f"Could not fetch index data for {symbol}"}
                     
-                    stock_data = quote_data["stocks"][0]
-                    metadata = stock_data["metadata"]
-                    current_price = metadata["lastPrice"]
-                    price_change = ((current_price - metadata["prevClose"]) / metadata["prevClose"]) * 100
+                    current_price = None
+                    price_change = 0
                     
+                    # Map symbol to index name
+                    index_mapping = {
+                        "NIFTY": "NIFTY 50",
+                        "BANKNIFTY": "NIFTY BANK", 
+                        "FINNIFTY": "NIFTY FINANCIAL SERVICES",
+                        "MIDCPNIFTY": "NIFTY MIDCAP SELECT",
+                        "NIFTYNXT50": "NIFTY NEXT 50"
+                    }
+                    
+                    target_index = index_mapping.get(symbol, symbol)
+                    
+                    # Find the index in the data
+                    for index in indices_data.get("data", []):
+                        index_name = index.get("index", "")
+                        if index_name == target_index:
+                            current_price = float(index.get("last", 0))
+                            price_change = float(index.get("percentChange", 0))
+                            break
+                    
+                    if current_price is None:
+                        return {"error": f"Index {symbol} not found in NSE data"}
+                    
+                    # Get futures volume from quote-derivative if available
                     volume = 0
                     try:
-                        volume = int(stock_data["marketDeptOrderBook"]["tradeInfo"].get("totalTradedVolume", 0))
+                        quote_data = nse_client.get_quote_derivative(symbol)
+                        if "error" not in quote_data and "stocks" in quote_data:
+                            for stock in quote_data["stocks"]:
+                                if stock.get("metadata", {}).get("instrumentType") == "Index Futures":
+                                    volume = int(stock.get("marketDeptOrderBook", {}).get("tradeInfo", {}).get("totalTradedVolume", 0))
+                                    break
                     except:
-                        volume = 0
+                        pass
                     
                     best_contract = {
                         "symbol": symbol,
@@ -621,6 +663,7 @@ def create_futures_analysis_routes(nse_client):
                         "category": "Index Futures"
                     }
                 else:
+                    
                     hist_data = nse_client.get_historical_data(symbol, from_date, to_date)
                     if "error" in hist_data or not hist_data.get("data"):
                         return {"error": f"Could not fetch historical data for {symbol}"}
@@ -676,8 +719,9 @@ def create_futures_analysis_routes(nse_client):
             
             # Calculate AI-based stop loss and target
             action = "BUY"  # Default action
+        
             sl_target = analyzer.calculate_stop_loss_target(symbol.upper(), current_price, action)
-            
+         
             if "error" in sl_target:
                 return {"error": f"Could not calculate risk levels for {symbol.upper()}"}
             
@@ -693,29 +737,7 @@ def create_futures_analysis_routes(nse_client):
             except:
                 pass
             
-            # Fallback lot size mapping if API fails
-            if lot_size <= 1:
-                lot_sizes = {
-                    "NIFTY": 75, "BANKNIFTY": 15, "FINNIFTY": 40, "MIDCPNIFTY": 75,
-                    "SBIN": 3000, "ICICIBANK": 1375, "HDFCBANK": 550, "AXISBANK": 1200,
-                    "KOTAKBANK": 400, "INDUSINDBK": 900, "BAJFINANCE": 125, "BAJAJFINSV": 125,
-                    "RELIANCE": 250, "TCS": 150, "INFY": 300, "WIPRO": 3000, "HCLTECH": 500,
-                    "TECHM": 400, "LT": 150, "MARUTI": 50, "TATAMOTORS": 1500, "M&M": 75,
-                    "BHARTIARTL": 275, "ADANIENT": 250, "ADANIPORTS": 400, "ADANIGREEN": 250,
-                    "ITC": 3200, "HINDUNILVR": 300, "ASIANPAINT": 150, "NESTLEIND": 50,
-                    "TITAN": 300, "ULTRACEMCO": 150, "JSWSTEEL": 800, "TATASTEEL": 1500,
-                    "HINDALCO": 1000, "VEDL": 4800, "COALINDIA": 4000, "NTPC": 2000,
-                    "POWERGRID": 2700, "ONGC": 2750, "IOC": 1000, "BPCL": 500, "GAIL": 1250,
-                    "SAIL": 10000, "NMDC": 8400, "TRENT": 125, "DMART": 100, "GODREJCP": 1000,
-                    "BRITANNIA": 200, "DABUR": 1800, "MARICO": 3000, "COLPAL": 400,
-                    "PIDILITIND": 300, "BERGEPAINT": 1200, "AKZOINDIA": 500, "KANSAINER": 400,
-                    "DRREDDY": 125, "SUNPHARMA": 400, "CIPLA": 1000, "LUPIN": 500,
-                    "AUROPHARMA": 1000, "DIVISLAB": 50, "BIOCON": 2500, "TORNTPHARM": 125,
-                    "APOLLOHOSP": 125, "FORTIS": 2000, "MAXHEALTH": 500, "BEL": 4000,
-                    "HAL": 500, "BHEL": 8000, "LTIM": 600, "PERSISTENT": 125, "COFORGE": 400,
-                    "MPHASIS": 200, "OFSS": 100, "MINDTREE": 400, "LTTS": 700
-                }
-                lot_size = lot_sizes.get(symbol.upper(), 1)
+
             
             stop_loss_distance = abs(current_price - sl_target["stop_loss"])
             total_investment = current_price * lot_size
@@ -781,7 +803,8 @@ def create_futures_analysis_routes(nse_client):
                         prediction = model.predict(current_scaled)[0]
                         ai_confidence = model.predict_proba(current_scaled)[0].max() * 100
                         
-                        # AI decision
+                        # AI decision with realistic confidence cap
+                        ai_confidence = min(ai_confidence, 85)  # Cap at 85% for realism
                         if ai_confidence > 70:
                             should_trade = True
                             trade_action = "BUY" if prediction == 1 else "SELL"

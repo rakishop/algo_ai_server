@@ -9,6 +9,9 @@ class NSEClient:
     def __init__(self):
         self.base_url = os.getenv("NSE_BASE_URL", "https://www.nseindia.com")
         self.timeout = int(os.getenv("NSE_TIMEOUT", "30"))
+        self.session_dir = "nse_sessions"
+        self.session_file = os.path.join(self.session_dir, "session.json")
+        os.makedirs(self.session_dir, exist_ok=True)
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
             'Accept': '*/*',
@@ -25,19 +28,54 @@ class NSEClient:
         }
     
     def _get_fresh_session(self):
-        """Create fresh session with cookies for each API call"""
+        """Get cached session or create new one if expired"""
+        import time
+        import json
+        from datetime import datetime, timedelta
+        
+        # Check if cached session exists and is valid
+        if os.path.exists(self.session_file):
+            try:
+                with open(self.session_file, 'r') as f:
+                    session_data = json.load(f)
+                
+                created_time = datetime.fromisoformat(session_data['created_at'])
+                if datetime.now() - created_time < timedelta(minutes=15):
+                    # Session is still valid, create session with stored cookies
+                    session = requests.Session()
+                    session.headers.update(self.headers)
+                    session.cookies.update(session_data['cookies'])
+                    return session
+            except:
+                pass
+        
+        # Create new session
         session = requests.Session()
         session.headers.update(self.headers)
+        
         try:
-            session.get(f"{self.base_url}/market-data/52-week-high-equity-market", timeout=self.timeout)
+            response = session.get(f"{self.base_url}/market-data/52-week-high-equity-market", timeout=self.timeout)
+            time.sleep(1)
+            
+            # Save session data
+            session_data = {
+                'created_at': datetime.now().isoformat(),
+                'cookies': dict(session.cookies)
+            }
+            
+            with open(self.session_file, 'w') as f:
+                json.dump(session_data, f)
+                
         except:
             pass
+        
         return session
     
     def get_quote_derivative(self, symbol: str) -> Dict[str, Any]:
         """Fetch derivative quote data including lot size"""
         session = self._get_fresh_session()
         try:
+            print(f"Fetching derivative quote for symbol: {self.base_url}/api/quote-derivative?symbol={symbol.upper()}")
             response = session.get(
                 f"{self.base_url}/api/quote-derivative?symbol={symbol.upper()}",
                 timeout=10
@@ -555,14 +593,20 @@ class NSEClient:
     
     def get_historical_data(self, symbol: str, from_date: str, to_date: str) -> Dict[str, Any]:
         """Fetch historical data for symbol"""
+        print(f"Fetching historical data for {symbol} from {from_date} to {to_date}")
         session = self._get_fresh_session()
+        
+        
         try:
+            print(f"Using URL: {self.base_url}/api/historicalOR/cm/equity?symbol={symbol}&series=[%22EQ%22]&from={from_date}&to={to_date}")
             response = session.get(
                 f"{self.base_url}/api/historicalOR/cm/equity?symbol={symbol}&series=[%22EQ%22]&from={from_date}&to={to_date}",
                 timeout=10
             )
+           
             response.raise_for_status()
             if response.text.strip():
+                
                 return response.json()
             else:
                 return {"error": "Empty response from NSE", "status_code": response.status_code}

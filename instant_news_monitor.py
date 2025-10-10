@@ -138,7 +138,7 @@ class InstantNewsMonitor:
                         message += f"🔗 {link}"
                     
                     data = {
-                        "chat_id": settings.telegram_chat_id,
+                        "chat_id": settings.telegram_news_channel_id,
                         "text": message,
                         "parse_mode": "HTML"
                     }

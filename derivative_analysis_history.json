@@ -7416,5 +7416,936 @@
         "risk_reward_ratio": 1.9995262908574154
       }
     ]
+  },
+  {
+    "timestamp": "2025-10-03T12:16:42.783406",
+    "opportunities": [
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 24800,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 109.95,
+        "price_change": -20.036363636363635,
+        "volume": 4422474,
+        "open_interest": 202432,
+        "ai_score": 71.6,
+        "recommendation": "SELL CALL",
+        "confidence": 88.64,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Good price movement"
+        ],
+        "stop_loss": 126.44,
+        "target": 76.97,
+        "risk_reward_ratio": 2.000000000000001
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Put",
+        "strike_price": 24700,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 30,
+        "price_change": -24.43324937027708,
+        "volume": 2509629,
+        "open_interest": 216713,
+        "ai_score": 70.3,
+        "recommendation": "SELL PUT",
+        "confidence": 88.12,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Good price movement"
+        ],
+        "stop_loss": 34.5,
+        "target": 21.0,
+        "risk_reward_ratio": 2.0
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Put",
+        "strike_price": 24700,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 28.8,
+        "price_change": -27.455919395466,
+        "volume": 2506397,
+        "open_interest": 216713,
+        "ai_score": 70.3,
+        "recommendation": "SELL PUT",
+        "confidence": 88.12,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Good price movement"
+        ],
+        "stop_loss": 33.12,
+        "target": 20.16,
+        "risk_reward_ratio": 2.0000000000000018
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 24800,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 115.3,
+        "price_change": -16.145454545454545,
+        "volume": 4408631,
+        "open_interest": 202432,
+        "ai_score": 71.6,
+        "recommendation": "AVOID CALL (Theta Decay)",
+        "confidence": 88.64,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity"
+        ],
+        "stop_loss": 132.59,
+        "target": 80.71,
+        "risk_reward_ratio": 2.000578368999421
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-10-03T12:20:16.011046",
+    "opportunities": [
+      {
+        "symbol": "NIFTY",
+        "option_type": "Put",
+        "strike_price": 24800,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 61.45,
+        "price_change": -7.034795763993949,
+        "volume": 4803930,
+        "open_interest": 309436,
+        "ai_score": 72.25,
+        "recommendation": "NEUTRAL",
+        "confidence": 80.00438729198186,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity"
+        ],
+        "stop_loss": 70.67,
+        "target": 43.02,
+        "risk_reward_ratio": 1.9989154013015187
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 24800,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 99.4,
+        "price_change": -27.70909090909091,
+        "volume": 4526440,
+        "open_interest": 195667,
+        "ai_score": 72.25,
+        "recommendation": "SELL CALL",
+        "confidence": 88.9,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Good price movement"
+        ],
+        "stop_loss": 114.31,
+        "target": 69.58,
+        "risk_reward_ratio": 2.000000000000001
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 24850,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 71.45,
+        "price_change": -32.78457196613358,
+        "volume": 3186697,
+        "open_interest": 158673,
+        "ai_score": 71.6,
+        "recommendation": "SELL CALL",
+        "confidence": 88.64,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Good price movement"
+        ],
+        "stop_loss": 82.17,
+        "target": 50.02,
+        "risk_reward_ratio": 1.9990671641791047
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Put",
+        "strike_price": 24700,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 33.55,
+        "price_change": -15.4911838790932,
+        "volume": 2561276,
+        "open_interest": 219110,
+        "ai_score": 70.95,
+        "recommendation": "AVOID PUT (Theta Decay)",
+        "confidence": 88.38,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity"
+        ],
+        "stop_loss": 38.58,
+        "target": 23.48,
+        "risk_reward_ratio": 2.0019880715705756
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Put",
+        "strike_price": 24700,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 33.55,
+        "price_change": -15.491183879093212,
+        "volume": 2561276,
+        "open_interest": 219110,
+        "ai_score": 70.95,
+        "recommendation": "AVOID PUT (Theta Decay)",
+        "confidence": 88.38,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity"
+        ],
+        "stop_loss": 38.58,
+        "target": 23.48,
+        "risk_reward_ratio": 2.0019880715705756
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 24800,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 99.4,
+        "price_change": -27.709090909090904,
+        "volume": 4526440,
+        "open_interest": 195667,
+        "ai_score": 72.25,
+        "recommendation": "SELL CALL",
+        "confidence": 88.9,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Good price movement"
+        ],
+        "stop_loss": 114.31,
+        "target": 69.58,
+        "risk_reward_ratio": 2.000000000000001
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 24850,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 71.45,
+        "price_change": -32.78457196613358,
+        "volume": 3186697,
+        "open_interest": 158673,
+        "ai_score": 71.6,
+        "recommendation": "SELL CALL",
+        "confidence": 88.64,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Good price movement"
+        ],
+        "stop_loss": 82.17,
+        "target": 50.02,
+        "risk_reward_ratio": 1.9990671641791047
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-10-03T13:24:28.180794",
+    "opportunities": [
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 25000,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 23.8,
+        "price_change": -42.78846153846154,
+        "volume": 3265283,
+        "open_interest": 252180,
+        "ai_score": 70.3,
+        "recommendation": "SELL CALL",
+        "confidence": 88.12,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Good price movement"
+        ],
+        "stop_loss": 27.37,
+        "target": 16.66,
+        "risk_reward_ratio": 2.0
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Put",
+        "strike_price": 24700,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 27.2,
+        "price_change": -31.486146095717885,
+        "volume": 3106963,
+        "open_interest": 227610,
+        "ai_score": 70.3,
+        "recommendation": "SELL PUT",
+        "confidence": 88.12,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Good price movement"
+        ],
+        "stop_loss": 31.28,
+        "target": 19.04,
+        "risk_reward_ratio": 1.9999999999999991
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Put",
+        "strike_price": 24700,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 26.75,
+        "price_change": -32.619647355163735,
+        "volume": 3103569,
+        "open_interest": 226603,
+        "ai_score": 70.3,
+        "recommendation": "SELL PUT",
+        "confidence": 88.12,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Good price movement"
+        ],
+        "stop_loss": 30.76,
+        "target": 18.72,
+        "risk_reward_ratio": 2.0024937655860344
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 25000,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 24.9,
+        "price_change": -40.144230769230774,
+        "volume": 3254231,
+        "open_interest": 254020,
+        "ai_score": 70.3,
+        "recommendation": "SELL CALL",
+        "confidence": 88.12,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Good price movement"
+        ],
+        "stop_loss": 28.63,
+        "target": 17.43,
+        "risk_reward_ratio": 2.0026809651474524
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-10-03T14:41:18.413217",
+    "opportunities": [
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 24800,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 128.3,
+        "price_change": -6.6909090909090905,
+        "volume": 6612983,
+        "open_interest": 192574,
+        "ai_score": 70.3,
+        "recommendation": "NEUTRAL",
+        "confidence": 78.19272727272727,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "Exceptional volume activity"
+        ],
+        "stop_loss": 147.54,
+        "target": 89.81,
+        "risk_reward_ratio": 2.000519750519753
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 24850,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 94.4,
+        "price_change": -11.194731890874882,
+        "volume": 5381904,
+        "open_interest": 157065,
+        "ai_score": 70.3,
+        "recommendation": "AVOID CALL (Theta Decay)",
+        "confidence": 88.12,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "Exceptional volume activity"
+        ],
+        "stop_loss": 108.56,
+        "target": 66.08,
+        "risk_reward_ratio": 2.000000000000001
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 24800,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 119.65,
+        "price_change": -12.981818181818177,
+        "volume": 6548531,
+        "open_interest": 202636,
+        "ai_score": 70.3,
+        "recommendation": "AVOID CALL (Theta Decay)",
+        "confidence": 88.12,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "Exceptional volume activity"
+        ],
+        "stop_loss": 137.6,
+        "target": 83.75,
+        "risk_reward_ratio": 2.0000000000000018
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-10-03T14:47:55.632001",
+    "opportunities": [
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 24800,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 130.15,
+        "price_change": -5.345454545454546,
+        "volume": 6781201,
+        "open_interest": 143940,
+        "ai_score": 74.2,
+        "recommendation": "NEUTRAL",
+        "confidence": 75.71636363636364,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "Exceptional volume activity"
+        ],
+        "stop_loss": 149.67,
+        "target": 91.11,
+        "risk_reward_ratio": 2.000000000000002
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 24850,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 95.6,
+        "price_change": -10.06585136406397,
+        "volume": 5595450,
+        "open_interest": 129024,
+        "ai_score": 74.2,
+        "recommendation": "AVOID CALL (Theta Decay)",
+        "confidence": 89.68,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "Exceptional volume activity"
+        ],
+        "stop_loss": 109.94,
+        "target": 66.92,
+        "risk_reward_ratio": 1.9999999999999991
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Put",
+        "strike_price": 24750,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 28.05,
+        "price_change": -45.32163742690059,
+        "volume": 3991465,
+        "open_interest": 142928,
+        "ai_score": 70.3,
+        "recommendation": "SELL PUT",
+        "confidence": 88.12,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Good price movement"
+        ],
+        "stop_loss": 32.26,
+        "target": 19.63,
+        "risk_reward_ratio": 2.0000000000000018
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Put",
+        "strike_price": 24700,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 21.25,
+        "price_change": -46.4735516372796,
+        "volume": 3852938,
+        "open_interest": 213978,
+        "ai_score": 70.3,
+        "recommendation": "SELL PUT",
+        "confidence": 88.12,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Good price movement"
+        ],
+        "stop_loss": 24.44,
+        "target": 14.87,
+        "risk_reward_ratio": 1.9999999999999993
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Put",
+        "strike_price": 24700,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 21.05,
+        "price_change": -46.977329974811084,
+        "volume": 3859105,
+        "open_interest": 213978,
+        "ai_score": 70.3,
+        "recommendation": "SELL PUT",
+        "confidence": 88.12,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Good price movement"
+        ],
+        "stop_loss": 24.21,
+        "target": 14.73,
+        "risk_reward_ratio": 2.0
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Put",
+        "strike_price": 24750,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 27.8,
+        "price_change": -45.808966861598435,
+        "volume": 3995975,
+        "open_interest": 142928,
+        "ai_score": 70.3,
+        "recommendation": "SELL PUT",
+        "confidence": 88.12,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Good price movement"
+        ],
+        "stop_loss": 31.97,
+        "target": 19.46,
+        "risk_reward_ratio": 2.000000000000001
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-10-03T15:01:34.425646",
+    "opportunities": [
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 24900,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 74.65,
+        "price_change": -6.6875,
+        "volume": 6361162,
+        "open_interest": 206009,
+        "ai_score": 72.9,
+        "recommendation": "NEUTRAL",
+        "confidence": 79.2225,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "Exceptional volume activity"
+        ],
+        "stop_loss": 85.85,
+        "target": 52.26,
+        "risk_reward_ratio": 1.9991071428571456
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-10-03T15:04:55.924340",
+    "opportunities": [
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 24800,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 149.5,
+        "price_change": 8.727272727272727,
+        "volume": 7063172,
+        "open_interest": 113294,
+        "ai_score": 76.8,
+        "recommendation": "NEUTRAL",
+        "confidence": 86.90181818181819,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "Exceptional volume activity"
+        ],
+        "stop_loss": 171.92,
+        "target": 104.65,
+        "risk_reward_ratio": 2.0004460303300635
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 24850,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 111.65,
+        "price_change": 5.032925682031985,
+        "volume": 5983369,
+        "open_interest": 109765,
+        "ai_score": 76.8,
+        "recommendation": "NEUTRAL",
+        "confidence": 75.81877704609596,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "Exceptional volume activity"
+        ],
+        "stop_loss": 128.4,
+        "target": 78.16,
+        "risk_reward_ratio": 1.9994029850746273
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-10-03T15:11:24.150489",
+    "opportunities": [
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 24800,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 144.75,
+        "price_change": 5.2727272727272725,
+        "volume": 7144399,
+        "open_interest": 96671,
+        "ai_score": 74.2,
+        "recommendation": "NEUTRAL",
+        "confidence": 75.49818181818182,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "Exceptional volume activity"
+        ],
+        "stop_loss": 166.46,
+        "target": 101.32,
+        "risk_reward_ratio": 2.000460617227084
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 24900,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 75.8,
+        "price_change": -5.25,
+        "volume": 6739952,
+        "open_interest": 180908,
+        "ai_score": 74.2,
+        "recommendation": "NEUTRAL",
+        "confidence": 75.43,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "Exceptional volume activity"
+        ],
+        "stop_loss": 87.17,
+        "target": 53.06,
+        "risk_reward_ratio": 1.9999999999999987
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-10-03T15:21:39.121322",
+    "opportunities": [
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 24900,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 71.85,
+        "price_change": -10.1875,
+        "volume": 6955224,
+        "open_interest": 153499,
+        "ai_score": 74.2,
+        "recommendation": "AVOID CALL (Theta Decay)",
+        "confidence": 89.68,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "Exceptional volume activity"
+        ],
+        "stop_loss": 82.63,
+        "target": 50.29,
+        "risk_reward_ratio": 1.9999999999999993
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-10-03T15:25:15.044796",
+    "opportunities": [
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 24800,
+        "expiry_date": "07-Oct-2025",
+        "current_price": 148.9,
+        "price_change": 8.290909090909091,
+        "volume": 7239419,
+        "open_interest": 79163,
+        "ai_score": 74.85,
+        "recommendation": "NEUTRAL",
+        "confidence": 84.81272727272727,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "Exceptional volume activity"
+        ],
+        "stop_loss": 171.23,
+        "target": 104.23,
+        "risk_reward_ratio": 2.0004478280340363
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-10-10T11:46:31.430246",
+    "opportunities": [
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 25300,
+        "expiry_date": "14-Oct-2025",
+        "current_price": 116.5,
+        "price_change": 150.53763440860214,
+        "volume": 4160732,
+        "open_interest": 190491,
+        "ai_score": 70.95,
+        "recommendation": "BUY CALL",
+        "confidence": 88.38,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Strong price momentum"
+        ],
+        "stop_loss": 99.02,
+        "target": 151.45,
+        "risk_reward_ratio": 1.9994279176201362
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 25300,
+        "expiry_date": "14-Oct-2025",
+        "current_price": 115,
+        "price_change": 147.31182795698925,
+        "volume": 4154801,
+        "open_interest": 190491,
+        "ai_score": 70.95,
+        "recommendation": "BUY CALL",
+        "confidence": 88.38,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Strong price momentum"
+        ],
+        "stop_loss": 97.75,
+        "target": 149.5,
+        "risk_reward_ratio": 2.0
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-10-10T12:06:45.820402",
+    "opportunities": [
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 25300,
+        "expiry_date": "14-Oct-2025",
+        "current_price": 110.1,
+        "price_change": 136.7741935483871,
+        "volume": 4393009,
+        "open_interest": 196776,
+        "ai_score": 70.95,
+        "recommendation": "BUY CALL",
+        "confidence": 88.38,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Strong price momentum"
+        ],
+        "stop_loss": 93.58,
+        "target": 143.13,
+        "risk_reward_ratio": 1.9993946731234873
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 25200,
+        "expiry_date": "14-Oct-2025",
+        "current_price": 192,
+        "price_change": 110.87314662273478,
+        "volume": 2466492,
+        "open_interest": 85354,
+        "ai_score": 70.3,
+        "recommendation": "BUY CALL",
+        "confidence": 88.12,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Strong price momentum"
+        ],
+        "stop_loss": 163.2,
+        "target": 249.6,
+        "risk_reward_ratio": 1.9999999999999991
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 25300,
+        "expiry_date": "14-Oct-2025",
+        "current_price": 117.95,
+        "price_change": 153.65591397849462,
+        "volume": 4375019,
+        "open_interest": 192624,
+        "ai_score": 72.25,
+        "recommendation": "BUY CALL",
+        "confidence": 88.9,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Strong price momentum"
+        ],
+        "stop_loss": 100.26,
+        "target": 153.34,
+        "risk_reward_ratio": 2.0005652911249294
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-10-10T12:55:52.649372",
+    "opportunities": [
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 25300,
+        "expiry_date": "14-Oct-2025",
+        "current_price": 123.8,
+        "price_change": 166.23655913978496,
+        "volume": 5105178,
+        "open_interest": 193225,
+        "ai_score": 72.25,
+        "recommendation": "BUY CALL",
+        "confidence": 88.9,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "Exceptional volume activity",
+          "Strong price momentum"
+        ],
+        "stop_loss": 105.23,
+        "target": 160.94,
+        "risk_reward_ratio": 2.000000000000001
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 25250,
+        "expiry_date": "14-Oct-2025",
+        "current_price": 160.1,
+        "price_change": 142.02569916855632,
+        "volume": 2952841,
+        "open_interest": 68005,
+        "ai_score": 70.3,
+        "recommendation": "BUY CALL",
+        "confidence": 88.12,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Strong price momentum"
+        ],
+        "stop_loss": 136.08,
+        "target": 208.13,
+        "risk_reward_ratio": 1.9995836802664462
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 25200,
+        "expiry_date": "14-Oct-2025",
+        "current_price": 200.35,
+        "price_change": 120.0439319055464,
+        "volume": 2654832,
+        "open_interest": 79565,
+        "ai_score": 71.6,
+        "recommendation": "BUY CALL",
+        "confidence": 88.64,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Strong price momentum"
+        ],
+        "stop_loss": 170.3,
+        "target": 260.45,
+        "risk_reward_ratio": 2.000000000000001
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 25200,
+        "expiry_date": "14-Oct-2025",
+        "current_price": 200.35,
+        "price_change": 120.0439319055464,
+        "volume": 2654832,
+        "open_interest": 79565,
+        "ai_score": 71.6,
+        "recommendation": "BUY CALL",
+        "confidence": 88.64,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Strong price momentum"
+        ],
+        "stop_loss": 170.3,
+        "target": 260.45,
+        "risk_reward_ratio": 2.000000000000001
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 25250,
+        "expiry_date": "14-Oct-2025",
+        "current_price": 160.1,
+        "price_change": 142.0256991685563,
+        "volume": 2952841,
+        "open_interest": 68005,
+        "ai_score": 70.3,
+        "recommendation": "BUY CALL",
+        "confidence": 88.12,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "High volume activity",
+          "Strong price momentum"
+        ],
+        "stop_loss": 136.08,
+        "target": 208.13,
+        "risk_reward_ratio": 1.9995836802664462
+      },
+      {
+        "symbol": "NIFTY",
+        "option_type": "Call",
+        "strike_price": 25300,
+        "expiry_date": "14-Oct-2025",
+        "current_price": 123.8,
+        "price_change": 166.23655913978496,
+        "volume": 5105178,
+        "open_interest": 193225,
+        "ai_score": 72.25,
+        "recommendation": "BUY CALL",
+        "confidence": 88.9,
+        "reasons": [
+          "AI model recommends this opportunity",
+          "Exceptional volume activity",
+          "Strong price momentum"
+        ],
+        "stop_loss": 105.23,
+        "target": 160.94,
+        "risk_reward_ratio": 2.000000000000001
+      }
+    ]
   }
 ]
