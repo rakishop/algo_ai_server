@@ -5,20 +5,21 @@ echo "# aimodelsearch" > README.md
 REM Init git only if not already initialized
 IF NOT EXIST ".git" git init
 
-REM Stage and commit
+REM Create and switch to main branch from detached HEAD
+git checkout -b main-temp
+git branch -D main 2>nul
+git branch -m main-temp main
+
+REM Stage and commit all changes
 git add .
-git commit -m "impleted nep api"
+git commit -m "implemented stock analysis api" --allow-empty
 
-REM Set branch
-git branch -M main
-
-REM Add remote only if not already added
+REM Add remote
 git remote remove origin 2>nul
 git remote add origin https://github.com/rakishop/algo_ai_server.git
 
-
-REM Push to GitHub
-git push -u origin main
+REM Force push to overwrite remote
+git push -f origin main
 
 echo === Commit Complete ===
 
