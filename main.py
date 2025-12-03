@@ -726,6 +726,54 @@ async def get_all_news_sources():
     except Exception as e:
         return {"error": str(e)}
 
+@app.get("/api/v1/news/dashboard")
+async def get_news_for_dashboard():
+    """Get formatted news data for dashboard display"""
+    try:
+        from real_news_fetcher import RealNewsFetcher
+        fetcher = RealNewsFetcher()
+        
+        # Get all news
+        all_news_data = fetcher.get_all_news()
+        
+        # Format for UI
+        formatted_news = []
+        for news_item in all_news_data.get('news', []):
+            formatted_news.append({
+                'id': hash(news_item.get('title', '') + news_item.get('source', '')),
+                'title': news_item.get('title', 'No Title'),
+                'summary': news_item.get('summary', news_item.get('subject', 'No Summary')),
+                'source': news_item.get('source', 'Unknown').replace('_', ' ').title(),
+                'link': news_item.get('link', ''),
+                'published': news_item.get('published', news_item.get('timestamp', '')),
+                'images': news_item.get('images', []),
+                'has_images': news_item.get('has_images', False),
+                'timestamp': news_item.get('timestamp', '')
+            })
+        
+        # Sort by timestamp (newest first)
+        formatted_news.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+        
+        return {
+            'success': True,
+            'total_news': len(formatted_news),
+            'sources_count': {
+                'rss_feeds': all_news_data.get('rss_count', 0),
+                'nse_announcements': all_news_data.get('nse_count', 0),
+                'bse_announcements': all_news_data.get('bse_count', 0),
+                'tv_channels': all_news_data.get('tv_count', 0)
+            },
+            'last_updated': all_news_data.get('last_updated', ''),
+            'news': formatted_news[:50]  # Limit to 50 latest news items
+        }
+    except Exception as e:
+        return {
+            'success': False,
+            'error': str(e),
+            'news': [],
+            'total_news': 0
+        }
+
 @app.get("/api/v1/news/nse-announcements")
 async def get_nse_announcements():
     """Get NSE corporate announcements"""
