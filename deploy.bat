@@ -7,18 +7,17 @@ IF NOT EXIST ".git" git init
 
 REM Stage and commit
 git add .
-git commit -m "impleted stock ananlysis api"
+git commit -m "implemented stock analysis api"
 
-REM Set branch
+REM Set branch to main
 git branch -M main
 
 REM Add remote only if not already added
 git remote remove origin 2>nul
 git remote add origin https://github.com/rakishop/algo_ai_server.git
 
-
-REM Push to GitHub
-git push -u origin main
+REM Force push to overwrite remote
+git push -f origin main
 
 echo === Commit Complete ===
 
