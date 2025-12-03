@@ -7,7 +7,7 @@ IF NOT EXIST ".git" git init
 
 REM Stage and commit
 git add .
-git commit -m "implemented stock analysis api"
+git commit -m "removed lmxl"
 
 REM Set branch to main
 git branch -M main
