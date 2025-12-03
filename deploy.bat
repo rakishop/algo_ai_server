@@ -7,17 +7,18 @@ IF NOT EXIST ".git" git init
 
 REM Stage and commit
 git add .
-git commit -m "removed lmxl"
+git commit -m "impleted nep api"
 
-REM Set branch to main
+REM Set branch
 git branch -M main
 
 REM Add remote only if not already added
 git remote remove origin 2>nul
 git remote add origin https://github.com/rakishop/algo_ai_server.git
 
-REM Force push to overwrite remote
-git push -f origin main
+
+REM Push to GitHub
+git push -u origin main
 
 echo === Commit Complete ===
 
