@@ -764,7 +764,7 @@ async def get_news_for_dashboard():
                 'tv_channels': all_news_data.get('tv_count', 0)
             },
             'last_updated': all_news_data.get('last_updated', ''),
-            'news': formatted_news[:50]  # Limit to 50 latest news items
+            'news': formatted_news  # Return all news items
         }
     except Exception as e:
         return {

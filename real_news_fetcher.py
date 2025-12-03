@@ -56,7 +56,7 @@ class RealNewsFetcher:
                 if response.status_code == 200:
                     try:
                         feed = atoma.parse_rss_bytes(response.content)
-                        for entry in feed.items[:5]:  # Top 5 from each source
+                        for entry in feed.items:  # All items from each source
                             images = self.extract_images_from_entry(entry)
                             
                             all_news.append({
@@ -73,7 +73,7 @@ class RealNewsFetcher:
                         # Try with atom parser if RSS fails
                         try:
                             feed = atoma.parse_atom_bytes(response.content)
-                            for entry in feed.entries[:5]:
+                            for entry in feed.entries:
                                 all_news.append({
                                     'title': getattr(entry, 'title', {}).get('value', '') if hasattr(getattr(entry, 'title', {}), 'get') else str(getattr(entry, 'title', '')),
                                     'summary': getattr(entry, 'summary', {}).get('value', '') if hasattr(getattr(entry, 'summary', {}), 'get') else str(getattr(entry, 'summary', '')),
