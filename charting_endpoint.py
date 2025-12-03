@@ -20,25 +20,45 @@ chart_cache = {}
 cache_lock = threading.Lock()
 CACHE_DURATION = 300  # 5 minutes
 
+def get_scrip_code(symbol):
+    """Get scripCode for symbol from NSE API"""
+    try:
+        response = requests.get("https://charting.nseindia.com//Charts/GetEQMasters", timeout=5)
+        print(f"NSE GetEQMasters response length: {len(response.text)} chars")
+        if response.status_code == 200:
+            for line in response.text.strip().split('\n'):
+                parts = line.split('|')
+                if len(parts) >= 2 and parts[1] == symbol:
+                    return int(parts[0])
+        return 26000  # Default fallback
+    except:
+        return 26000  # Default fallback
+
 def create_charting_routes(nse_client: NSEClient):
     router = APIRouter()
     
     # Enhanced endpoints are included in main.py
     
-    @router.post("/api/v1/charting/data")
+    @router.get("/api/v1/charting/data")
     def get_chart_data(
-        tradingSymbol: str,
+        tradingSymbol: str = None,
         chartPeriod: str = "I",
         timeInterval: int = 3,
         chartStart: int = 0,
         fromDate: int = 0,
         toDate: int = None,
-        exch: str = "N"
+        exch: str = "N",
+        maxResults: int = 20
     ):
-        """Get NSE charting data matching exact API structure"""
+        """Get NSE charting data - single symbol or analyze multiple stocks"""
         try:
             if toDate is None:
                 toDate = int(time.time())
+            
+            # If no symbol provided, analyze multiple stocks
+            if not tradingSymbol:
+                print("No symbol provided, analyzing multiple stocks")
+                return analyze_all_traded_stocks(chartPeriod, timeInterval, 20, maxResults)
             
             # Ensure proper symbol format with -EQ extension and uppercase
             tradingSymbol = tradingSymbol.upper()
@@ -49,9 +69,9 @@ def create_charting_routes(nse_client: NSEClient):
             try:
                 # Visit charting page first to get cookies
                 session = nse_client._get_fresh_session()
-                cookie_response = session.get("https://charting.nseindia.com", timeout=5)
+                cookie_response = session.get(f"https://charting.nseindia.com/?symbol={tradingSymbol}", timeout=5)
                 
-                chart_url = "https://charting.nseindia.com/Charts/ChartData/"
+                chart_url = "https://charting.nseindia.com//Charts/ChartData/"
                 payload = {
                     "chartPeriod": chartPeriod,
                     "chartStart": chartStart,
@@ -70,17 +90,21 @@ def create_charting_routes(nse_client: NSEClient):
                 chart_headers = {
                     'Accept': '*/*',
                     'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
+                    'Accept-Encoding': 'gzip, deflate, br, zstd',
                     'Content-Type': 'application/json; charset=utf-8',
                     'Cookie': cookie_header,
                     'Origin': 'https://charting.nseindia.com',
-                    'Referer': 'https://charting.nseindia.com/',
-                    'sec-fetch-dest': 'empty',
-                    'sec-fetch-mode': 'cors',
-                    'sec-fetch-site': 'same-origin'
+                    'Priority': 'u=1, i',
+                    'Sec-Ch-Ua': '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
+                    'Sec-Ch-Ua-Mobile': '?0',
+                    'Sec-Ch-Ua-Platform': '"Windows"',
+                    'Sec-Fetch-Dest': 'empty',
+                    'Sec-Fetch-Mode': 'cors',
+                    'Sec-Fetch-Site': 'same-origin',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36'
                 }
                 
                 response = session.post(chart_url, json=payload, headers=chart_headers, timeout=8)
-                print(f"🔍 NSE API Status: {response.status_code}, Cookies: {len(cookies)} for {tradingSymbol}")
                 
                 if response.status_code == 200 and response.text.strip():
                     nse_data = response.json()
@@ -159,6 +183,7 @@ def create_charting_routes(nse_client: NSEClient):
         """Analyze chart data with AI and return trading decision"""
         try:
             # Check required keys
+         
             required_keys = ['t', 'o', 'h', 'l', 'c', 'v']
             for key in required_keys:
                 if key not in chart_data:
@@ -174,7 +199,7 @@ def create_charting_routes(nse_client: NSEClient):
                 'volume': chart_data['v']
             })
             
-            if len(df) < 10:
+            if len(df) < 2:
                 return {"s": "error", "message": "Insufficient data for analysis"}
             
             # Technical indicators
@@ -199,29 +224,159 @@ def create_charting_routes(nse_client: NSEClient):
                 df['close'].iloc[-5:].mean() / current['close'] if len(df) >= 5 else 1
             ]
             
-            # AI decision
-            decision_score = calculate_ml_decision(features)
+            # Comprehensive analysis before decision
             price_change = (current['close'] - prev['close']) / prev['close'] * 100
             rsi = current['rsi'] if not pd.isna(current['rsi']) else 50
             
-            # Decision logic
-            if decision_score > 0.6 or (price_change > 2 and rsi < 70):
+            # Get SMA values for trend analysis
+            sma5 = current['sma_5'] if not pd.isna(current['sma_5']) else current['close']
+            sma20 = current['sma_20'] if not pd.isna(current['sma_20']) else current['close']
+            
+            # Trend analysis
+            trend_score = 0
+            if current['close'] > sma5 > sma20:
+                trend_score = 2  # Strong uptrend
+            elif current['close'] > sma5 and sma5 <= sma20:
+                trend_score = 1  # Weak uptrend
+            elif current['close'] < sma5 < sma20:
+                trend_score = -2  # Strong downtrend
+            elif current['close'] < sma5 and sma5 >= sma20:
+                trend_score = -1  # Weak downtrend
+            
+            # Momentum analysis
+            momentum_score = 0
+            if abs(price_change) > 3:
+                momentum_score = 2 if price_change > 0 else -2
+            elif abs(price_change) > 1:
+                momentum_score = 1 if price_change > 0 else -1
+            
+            # RSI analysis
+            rsi_score = 0
+            if rsi > 70:
+                rsi_score = -1  # Overbought
+            elif rsi < 30:
+                rsi_score = 1   # Oversold
+            elif 40 <= rsi <= 60:
+                rsi_score = 0   # Neutral
+            
+            # Volume analysis
+            volume_ratio = current['volume'] / current['volume_sma'] if not pd.isna(current['volume_sma']) and current['volume_sma'] > 0 else 1.0
+            volume_score = 0
+            if volume_ratio > 2:
+                volume_score = 2  # Very high volume
+            elif volume_ratio > 1.5:
+                volume_score = 1  # High volume
+            elif volume_ratio < 0.5:
+                volume_score = -1  # Low volume
+            
+            # Volatility analysis
+            volatility = current['volatility'] if not pd.isna(current['volatility']) else 0.02
+            volatility_score = 0
+            if volatility > 0.05:
+                volatility_score = -1  # High volatility = risky
+            elif volatility < 0.01:
+                volatility_score = 1   # Low volatility = stable
+            
+            # Combined technical score
+            technical_score = trend_score + momentum_score + rsi_score + volume_score + volatility_score
+            
+            # ML decision with validation
+            decision_score = calculate_ml_decision(features)
+            
+            # Final score combining ML and technical analysis
+            final_score = (decision_score * 10) + technical_score
+            
+            # ML-based target and stop loss calculation (variables already defined above)
+            
+            # Dynamic target and stop loss based on technical indicators
+            base_target = 0.02 + (volatility * 10)  # 2% + volatility factor
+            base_stop = 0.015 + (volatility * 5)    # 1.5% + volatility factor
+            
+            # Adjust based on RSI
+            if rsi > 70:  # Overbought
+                base_target *= 0.7
+                base_stop *= 1.3
+            elif rsi < 30:  # Oversold
+                base_target *= 1.3
+                base_stop *= 0.7
+            
+            # Adjust based on volume
+            if volume_ratio > 1.5:  # High volume
+                base_target *= 1.2
+                base_stop *= 0.9
+            
+            # Adjust based on SMA trend
+            if current['close'] > sma5 > sma20:  # Strong uptrend
+                base_target *= 1.3
+            elif current['close'] < sma5 < sma20:  # Strong downtrend
+                base_target *= 1.3
+            
+            # Generate trade reasons
+            reasons = []
+            if decision_score > 0.6:
+                reasons.append(f"Strong ML signal ({decision_score:.2f})")
+            if price_change > 2:
+                reasons.append(f"Bullish momentum (+{price_change:.1f}%)")
+            elif price_change < -2:
+                reasons.append(f"Bearish momentum ({price_change:.1f}%)")
+            if rsi > 70:
+                reasons.append("Overbought (RSI > 70)")
+            elif rsi < 30:
+                reasons.append("Oversold (RSI < 30)")
+            if current['close'] > sma5 > sma20:
+                reasons.append("Strong uptrend (Price > SMA5 > SMA20)")
+            elif current['close'] < sma5 < sma20:
+                reasons.append("Strong downtrend (Price < SMA5 < SMA20)")
+            if volume_ratio > 1.5:
+                reasons.append(f"High volume ({volume_ratio:.1f}x avg)")
+            if volatility > 0.03:
+                reasons.append(f"High volatility ({volatility*100:.1f}%)")
+            
+            # Enhanced decision logic with comprehensive analysis
+            if final_score > 8 and technical_score >= 3:
                 decision = "BUY"
-                confidence = min(90, max(65, int(decision_score * 100) + 15))
-            elif decision_score < 0.4 or (price_change < -2 and rsi > 30):
+                confidence = min(95, max(70, int(final_score * 8) + 20))
+            elif final_score < 2 and technical_score <= -3:
                 decision = "SELL"
-                confidence = min(90, max(65, int((1 - decision_score) * 100) + 15))
+                confidence = min(95, max(70, int((10 - final_score) * 8) + 20))
+            elif final_score > 6 and trend_score >= 1 and volume_score >= 1:
+                decision = "BUY"
+                confidence = min(85, max(65, int(final_score * 7) + 15))
+            elif final_score < 4 and trend_score <= -1 and volume_score >= 1:
+                decision = "SELL"
+                confidence = min(85, max(65, int((10 - final_score) * 7) + 15))
             else:
                 decision = "HOLD"
-                confidence = 55
+                confidence = max(50, min(65, int(abs(final_score - 5) * 3) + 50))
+            
+            # Calculate entry, target, and stop loss
+            entry_price = current['close']
+            if decision == "BUY":
+                target_price = entry_price * (1 + base_target)
+                stop_loss = entry_price * (1 - base_stop)
+                if not reasons:
+                    reasons.append("Strong bullish signals")
+            elif decision == "SELL":
+                target_price = entry_price * (1 - base_target)
+                stop_loss = entry_price * (1 + base_stop)
+                if not reasons:
+                    reasons.append("Strong bearish signals")
+            else:
+                target_price = entry_price
+                stop_loss = entry_price
+                reasons.append("Mixed signals - neutral stance")
             
             return {
                 "s": "ok",
                 "symbol": tradingSymbol,
                 "decision": decision,
                 "confidence": confidence,
-                "current_price": current['close'],
+                "current_price": round(current['close'], 2),
+                "entry_price": round(entry_price, 2),
+                "target_price": round(target_price, 2),
+                "stop_loss": round(stop_loss, 2),
                 "price_change_pct": round(price_change, 2),
+                "risk_reward_ratio": round(abs(target_price - entry_price) / abs(entry_price - stop_loss), 2) if abs(entry_price - stop_loss) > 0 else 0,
                 "technical_indicators": {
                     "rsi": round(rsi, 2),
                     "sma_5": round(current['sma_5'], 2) if not pd.isna(current['sma_5']) else 0,
@@ -230,12 +385,29 @@ def create_charting_routes(nse_client: NSEClient):
                 "volume_ratio": round(current['volume'] / current['volume_sma'], 2) if not pd.isna(current['volume_sma']) and current['volume_sma'] > 0 else 1.0,
                 "data_points": len(df),
                 "analysis_time": datetime.now().isoformat(),
-                "recommendation": f"{decision} with {confidence}% confidence"
+                "recommendation": f"{decision} with {confidence}% confidence",
+                "reasons": reasons[:3],
+                "analysis_scores": {
+                    "trend_score": trend_score,
+                    "momentum_score": momentum_score,
+                    "rsi_score": rsi_score,
+                    "volume_score": volume_score,
+                    "volatility_score": volatility_score,
+                    "technical_score": technical_score,
+                    "ml_score": round(decision_score, 3),
+                    "final_score": round(final_score, 2)
+                },
+                "trading_plan": {
+                    "action": decision,
+                    "quantity_suggestion": "Based on risk management",
+                    "holding_period": "Short to Medium term" if decision != "HOLD" else "Current position",
+                    "market_condition": "Bullish" if decision == "BUY" else "Bearish" if decision == "SELL" else "Neutral"
+                }
             }
             
         except Exception as e:
-            print(f"❌ Error in analyze_chart_data: {str(e)}")
-            print(f"📊 Chart data: {chart_data}")
+            print(f"Error in analyze_chart_data: {str(e)}")
+            print(f"Chart data: {chart_data}")
             return {"s": "error", "message": str(e)}
     
     def _generate_chart_from_real_data(market_data, chartPeriod, timeInterval, data_points, fromDate, toDate):
@@ -316,7 +488,7 @@ def create_charting_routes(nse_client: NSEClient):
                 # Get raw NSE data directly
                 session = nse_client._get_fresh_session()
                 cookie_response = session.get("https://charting.nseindia.com", timeout=5)
-                chart_url = "https://charting.nseindia.com/Charts/ChartData/"
+                chart_url = "https://charting.nseindia.com/Charts/symbolhistoricaldata/"
                 payload = {
                     "chartPeriod": chartPeriod,
                     "chartStart": 0,
@@ -333,13 +505,18 @@ def create_charting_routes(nse_client: NSEClient):
                 chart_headers = {
                     'Accept': '*/*',
                     'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
+                    'Accept-Encoding': 'gzip, deflate, br, zstd',
                     'Content-Type': 'application/json; charset=utf-8',
                     'Cookie': cookie_header,
                     'Origin': 'https://charting.nseindia.com',
-                    'Referer': 'https://charting.nseindia.com/',
-                    'sec-fetch-dest': 'empty',
-                    'sec-fetch-mode': 'cors',
-                    'sec-fetch-site': 'same-origin'
+                    'Priority': 'u=1, i',
+                    'Sec-Ch-Ua': '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
+                    'Sec-Ch-Ua-Mobile': '?0',
+                    'Sec-Ch-Ua-Platform': '"Windows"',
+                    'Sec-Fetch-Dest': 'empty',
+                    'Sec-Fetch-Mode': 'cors',
+                    'Sec-Fetch-Site': 'same-origin',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36'
                 }
                 
                 response = session.post(chart_url, json=payload, headers=chart_headers, timeout=8)
@@ -557,8 +734,11 @@ def create_charting_routes(nse_client: NSEClient):
             medium_trend = "UP" if len(recent_10) > 1 and recent_10.iloc[-1] > recent_10.iloc[0] else "DOWN"
             
             # SMA trend validation
-            if len(df) >= 20:
-                current_price = df['close'].iloc[-1]
+            current_price = df['close'].iloc[-1]
+            sma5 = current_price
+            sma20 = current_price
+            
+            if len(df) >= 20 and 'sma_5' in df.columns and 'sma_20' in df.columns:
                 sma5 = df['sma_5'].iloc[-1] if not pd.isna(df['sma_5'].iloc[-1]) else current_price
                 sma20 = df['sma_20'].iloc[-1] if not pd.isna(df['sma_20'].iloc[-1]) else current_price
                 
@@ -584,17 +764,10 @@ def create_charting_routes(nse_client: NSEClient):
             
             # More accurate trend strength
             if short_trend == medium_trend:
-                if len(df) >= 20:
-                    current_price = df['close'].iloc[-1]
-                    sma5 = df['sma_5'].iloc[-1] if not pd.isna(df['sma_5'].iloc[-1]) else current_price
-                    sma20 = df['sma_20'].iloc[-1] if not pd.isna(df['sma_20'].iloc[-1]) else current_price
-                    
-                    if short_trend == "UP" and current_price > sma5 > sma20:
-                        trend_strength = "Strong"
-                    elif short_trend == "DOWN" and current_price < sma5 < sma20:
-                        trend_strength = "Strong"
-                    else:
-                        trend_strength = "Moderate"
+                if short_trend == "UP" and current_price > sma5 > sma20:
+                    trend_strength = "Strong"
+                elif short_trend == "DOWN" and current_price < sma5 < sma20:
+                    trend_strength = "Strong"
                 else:
                     trend_strength = "Moderate"
             else:
@@ -741,6 +914,7 @@ def create_charting_routes(nse_client: NSEClient):
         
         return chart_data
     
+
     # Pre-trained ML model for trading decisions
     @lru_cache(maxsize=1)
     def get_trained_model():
@@ -776,10 +950,66 @@ def create_charting_routes(nse_client: NSEClient):
     def ml_analysis(symbol, chartPeriod, timeInterval, stock_info):
         """ML-powered analysis for accurate trading decisions"""
         try:
-            chart_data = get_cached_chart_data(symbol, chartPeriod, timeInterval)
+            # Clear any cached analyzed results to ensure fresh raw data
+            cache_key = f"{symbol}_{chartPeriod}_{timeInterval}"
+            with cache_lock:
+                if cache_key in chart_cache:
+                    del chart_cache[cache_key]
             
-            if chart_data["s"] != "ok" or len(chart_data.get("c", [])) < 10:
+            # Get raw NSE data directly
+            toDate = int(time.time())
+            tradingSymbol = symbol.upper()
+            if not tradingSymbol.endswith("-EQ"):
+                tradingSymbol = f"{tradingSymbol}-EQ"
+            
+            session = nse_client._get_fresh_session()
+            cookie_response = session.get(f"https://charting.nseindia.com/?symbol={tradingSymbol}", timeout=5)
+            
+            chart_url = "https://charting.nseindia.com//Charts/ChartData/"
+            payload = {
+                "chartPeriod": chartPeriod,
+                "chartStart": 0,
+                "exch": "N",
+                "fromDate": 0,
+                "timeInterval": timeInterval,
+                "toDate": toDate,
+                "tradingSymbol": tradingSymbol
+            }
+            
+            cookies = session.cookies.get_dict()
+            cookie_header = '; '.join([f'{k}={v}' for k, v in cookies.items()])
+            
+            chart_headers = {
+                'Accept': '*/*',
+                'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
+                'Accept-Encoding': 'gzip, deflate, br, zstd',
+                'Content-Type': 'application/json; charset=utf-8',
+                'Cookie': cookie_header,
+                'Origin': 'https://charting.nseindia.com',
+                'Priority': 'u=1, i',
+                'Sec-Ch-Ua': '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
+                'Sec-Ch-Ua-Mobile': '?0',
+                'Sec-Ch-Ua-Platform': '"Windows"',
+                'Sec-Fetch-Dest': 'empty',
+                'Sec-Fetch-Mode': 'cors',
+                'Sec-Fetch-Site': 'same-origin',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36'
+            }
+            
+            response = session.post(chart_url, json=payload, headers=chart_headers, timeout=8)
+            session.close()
+            
+            if response.status_code != 200 or not response.text.strip():
+                print(f"❌ NSE API failed for {symbol}: {response.status_code}")
                 return None
+                
+            chart_data = response.json()
+            
+            if chart_data.get("s", "").lower() != "ok" or not chart_data.get("c") or len(chart_data.get("c", [])) < 2:
+                print(f"❌ Chart data failed for {symbol}: status={chart_data.get('s')}, candles={len(chart_data.get('c', []))}")
+                return None
+            
+            print(f"✅ ML Analysis - Valid chart data for {symbol}: {len(chart_data.get('c', []))} candles")
             
             closes = np.array(chart_data["c"])
             volumes = np.array(chart_data["v"])
@@ -878,24 +1108,41 @@ def create_charting_routes(nse_client: NSEClient):
             if not reasons:
                 reasons.append("ML technical analysis")
             
+            # Calculate target and stop loss based on volatility and decision
+            if decision == "BUY":
+                target_price = current_price * (1 + (0.02 + volatility * 5))  # 2% + volatility factor
+                stop_loss = current_price * (1 - (0.015 + volatility * 3))    # 1.5% + volatility factor
+            elif decision == "SELL":
+                target_price = current_price * (1 - (0.02 + volatility * 5))  # Short target
+                stop_loss = current_price * (1 + (0.015 + volatility * 3))    # Short stop loss
+            else:
+                target_price = current_price
+                stop_loss = current_price
+            
             return {
                 "symbol": f"{symbol}-EQ",
                 "decision": decision,
                 "confidence": confidence,
-                "entry_price": current_price,
+                "entry_price": round(current_price, 2),
+                "entry": round(current_price, 2),
+                "exit_price": round(target_price, 2),
+                "target": round(target_price, 2),
+                "stoploss": round(stop_loss, 2),
                 "market_price": stock_info["current_price"],
-                "price_change_pct": stock_info["change_pct"],
-                "volume": stock_info["volume"],
-                "value": stock_info["value"],
-                "rsi": round(rsi, 2),
-                "volume_ratio": round(volume_ratio, 2),
-                "trend_strength": round(trend_strength, 3),
+                "price_change": stock_info["change_pct"],
+                "volume_cr": stock_info["volume"],
+                "value_cr": stock_info["value"],
+                "rsi_value": round(rsi, 2),
+                "vol_ratio": round(volume_ratio, 2),
+                "trend_score": round(trend_strength, 3),
                 "volatility": round(volatility * 100, 2),
-                "trend": "Strong" if abs(trend_strength) > 0.1 else "Mixed",
-                "key_reason": reasons[0],
-                "ml_confidence": round(max(probabilities), 3)
+                "trend_type": "Strong" if abs(trend_strength) > 0.1 else "Mixed",
+                "reason": reasons[0],
+                "ml_score": round(max(probabilities), 3),
+                "risk_reward": round(abs(target_price - current_price) / abs(current_price - stop_loss), 2) if abs(current_price - stop_loss) > 0 else 0
             }
         except Exception as e:
+            print(f"❌ ML Analysis error for {symbol}: {str(e)}")
             return None
     
     @router.get("/api/v1/ai/all-stocks-analysis")
@@ -921,7 +1168,9 @@ def create_charting_routes(nse_client: NSEClient):
             # Filter stocks with pandas (much faster)
             df_filtered = df[
                 (df['symbol'].notna()) & 
-                (df['pchange'].abs() >= 0.5)  # 0.5% price change filter
+                (df['pchange'].abs() >= 0.5) &  # 0.5% price change filter
+                (df['symbol'].str.len() <= 20) &  # Skip very long symbols
+                (~df['symbol'].str.contains(r'\d{3}[A-Z]+\d+', na=False))  # Skip invalid format symbols
             ].copy()
             
             # Sort by absolute price change (most volatile first)
@@ -930,6 +1179,7 @@ def create_charting_routes(nse_client: NSEClient):
             
             # Convert back to list for processing
             selected_stocks = df_filtered.head(min(maxResults, len(df_filtered))).to_dict('records')
+            
             
             # Rename columns for consistency
             for stock in selected_stocks:
@@ -954,11 +1204,20 @@ def create_charting_routes(nse_client: NSEClient):
                     
                     for future in futures:
                         try:
-                            result = future.result(timeout=2)  # Reduced timeout for speed
-                            if result and result["confidence"] >= minConfidence:
-                                trading_decisions.append(result)
-                        except:
+                            result = future.result(timeout=5)  # Increased timeout
+                            if result:
+                                if result["confidence"] >= minConfidence:
+                                    trading_decisions.append(result)
+                                    print(f"✅ Added {result['symbol']}: {result['decision']} ({result['confidence']}%)")
+                                else:
+                                    print(f"⚠️ Low confidence {result['symbol']}: {result['confidence']}% < {minConfidence}%")
+                            else:
+                                print(f"❌ No result from analysis")
+                        except Exception as e:
+                            print(f"❌ Future error: {str(e)}")
                             continue
+            
+            print(f"📈 Analysis Complete: {len(trading_decisions)} stocks analyzed successfully")
             
             # Sort by confidence
             trading_decisions.sort(key=lambda x: x["confidence"], reverse=True)
@@ -1186,6 +1445,60 @@ def create_charting_routes(nse_client: NSEClient):
                 }
             }
             
+        except Exception as e:
+            return {"error": str(e)}
+    
+    @router.get("/api/stock-analysis")
+    def stock_analysis_endpoint(
+        chartPeriod: str = "D",
+        timeInterval: int = 1,
+        minConfidence: int = 60,
+        maxResults: int = 50
+    ):
+        """Stock analysis endpoint with entry, exit, stoploss, target fields"""
+        try:
+            # Call the existing all-stocks-analysis function
+            result = analyze_all_traded_stocks(chartPeriod, timeInterval, minConfidence, maxResults)
+            
+            # Ensure all recommendations have the required fields
+            for category in ['buy_recommendations', 'sell_recommendations', 'hold_recommendations']:
+                if category in result:
+                    for stock in result[category]:
+                        if 'entry' not in stock and 'entry_price' in stock:
+                            stock['entry'] = stock['entry_price']
+                        if 'exit' not in stock and 'target' in stock:
+                            stock['exit'] = stock['target']
+                        if 'stoploss' not in stock and 'stop_loss' in stock:
+                            stock['stoploss'] = stock['stop_loss']
+            
+            return result
+        except Exception as e:
+            return {"error": str(e)}
+    
+    @router.get("/api/stock-analysis")
+    def stock_analysis_endpoint(
+        chartPeriod: str = "D",
+        timeInterval: int = 1,
+        minConfidence: int = 60,
+        maxResults: int = 50
+    ):
+        """Stock analysis endpoint with entry, exit, stoploss, target fields"""
+        try:
+            # Call the existing all-stocks-analysis function
+            result = analyze_all_traded_stocks(chartPeriod, timeInterval, minConfidence, maxResults)
+            
+            # Ensure all recommendations have the required fields
+            for category in ['buy_recommendations', 'sell_recommendations', 'hold_recommendations']:
+                if category in result:
+                    for stock in result[category]:
+                        if 'entry' not in stock and 'entry_price' in stock:
+                            stock['entry'] = stock['entry_price']
+                        if 'exit' not in stock and 'target' in stock:
+                            stock['exit'] = stock['target']
+                        if 'stoploss' not in stock and 'stop_loss' in stock:
+                            stock['stoploss'] = stock['stop_loss']
+            
+            return result
         except Exception as e:
             return {"error": str(e)}
     
