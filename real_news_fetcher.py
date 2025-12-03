@@ -1,3 +1,14 @@
+# Python 3.13 compatibility fix
+try:
+    import cgi
+except ImportError:
+    import html
+    import sys
+    class CGIModule:
+        def escape(self, s, quote=False):
+            return html.escape(s, quote=quote)
+    sys.modules['cgi'] = CGIModule()
+
 import feedparser
 import requests
 from bs4 import BeautifulSoup
