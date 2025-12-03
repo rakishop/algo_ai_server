@@ -1,15 +1,4 @@
-# Python 3.13 compatibility fix
-try:
-    import cgi
-except ImportError:
-    import html
-    import sys
-    class CGIModule:
-        def escape(self, s, quote=False):
-            return html.escape(s, quote=quote)
-    sys.modules['cgi'] = CGIModule()
-
-import feedparser
+import atoma
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -26,9 +15,10 @@ class RealNewsFetcher:
             'cnbc_tv18': 'https://www.cnbctv18.com/rss/market.xml',
             'zee_business': 'https://zeenews.india.com/rss/business-news.xml',
             'cnbc_awaaz': 'https://www.cnbctv18.com/rss/cnbc-awaaz.xml',
-            'financial_express': 'https://www.financialexpress.com/market/rss',
+
             'hindu_business': 'https://www.thehindu.com/business/markets/feeder/default.rss',
-            'reuters_india': 'https://feeds.reuters.com/reuters/INbusinessNews',
+            'reuters_news': 'https://ir.thomsonreuters.com/rss/news-releases.xml?items=15',
+            'reuters_events': 'https://ir.thomsonreuters.com/rss/events.xml?items=15',
             'bloomberg_india': 'https://feeds.bloomberg.com/markets/news.rss',
             'ndtv_business': 'https://feeds.feedburner.com/ndtvprofit-latest'
         }
@@ -41,28 +31,18 @@ class RealNewsFetcher:
         """Extract images from RSS entry"""
         images = []
         
-        # Check for media content
-        if hasattr(entry, 'media_content'):
-            for media in entry.media_content:
-                if media.get('type', '').startswith('image/'):
-                    images.append(media['url'])
-        
-        # Check for enclosures
-        if hasattr(entry, 'enclosures'):
-            for enc in entry.enclosures:
-                if enc.get('type', '').startswith('image/'):
-                    images.append(enc.href)
-        
-        # Parse content for images
-        content = entry.get('summary', '') or entry.get('description', '')
+        # Parse content for images only
+        content = getattr(entry, 'description', '') or ''
         if content:
-            soup = BeautifulSoup(content, 'html.parser')
-            img_tags = soup.find_all('img')
-            for img in img_tags:
-                src = img.get('src')
-                if src and hasattr(entry, 'link'):
-                    full_url = urljoin(entry.link, src)
-                    images.append(full_url)
+            try:
+                soup = BeautifulSoup(content, 'html.parser')
+                img_tags = soup.find_all('img')
+                for img in img_tags:
+                    src = img.get('src')
+                    if src:
+                        images.append(src)
+            except:
+                pass
         
         return images[:2]  # Max 2 images
     
@@ -72,20 +52,40 @@ class RealNewsFetcher:
         
         for source, url in self.rss_feeds.items():
             try:
-                feed = feedparser.parse(url)
-                for entry in feed.entries[:5]:  # Top 5 from each source
-                    images = self.extract_images_from_entry(entry)
-                    
-                    all_news.append({
-                        'title': entry.title,
-                        'summary': entry.summary if hasattr(entry, 'summary') else entry.description if hasattr(entry, 'description') else '',
-                        'source': source,
-                        'link': entry.link if hasattr(entry, 'link') else '',
-                        'published': entry.published if hasattr(entry, 'published') else '',
-                        'images': images,
-                        'has_images': len(images) > 0,
-                        'timestamp': datetime.now().isoformat()
-                    })
+                response = requests.get(url, headers=self.headers, timeout=10)
+                if response.status_code == 200:
+                    try:
+                        feed = atoma.parse_rss_bytes(response.content)
+                        for entry in feed.items[:5]:  # Top 5 from each source
+                            images = self.extract_images_from_entry(entry)
+                            
+                            all_news.append({
+                                'title': getattr(entry, 'title', ''),
+                                'summary': getattr(entry, 'description', ''),
+                                'source': source,
+                                'link': getattr(entry, 'link', ''),
+                                'published': str(getattr(entry, 'pub_date', '')),
+                                'images': images,
+                                'has_images': len(images) > 0,
+                                'timestamp': datetime.now().isoformat()
+                            })
+                    except Exception as parse_error:
+                        # Try with atom parser if RSS fails
+                        try:
+                            feed = atoma.parse_atom_bytes(response.content)
+                            for entry in feed.entries[:5]:
+                                all_news.append({
+                                    'title': getattr(entry, 'title', {}).get('value', '') if hasattr(getattr(entry, 'title', {}), 'get') else str(getattr(entry, 'title', '')),
+                                    'summary': getattr(entry, 'summary', {}).get('value', '') if hasattr(getattr(entry, 'summary', {}), 'get') else str(getattr(entry, 'summary', '')),
+                                    'source': source,
+                                    'link': getattr(entry, 'id', ''),
+                                    'published': str(getattr(entry, 'published', '')),
+                                    'images': [],
+                                    'has_images': False,
+                                    'timestamp': datetime.now().isoformat()
+                                })
+                        except Exception as atom_error:
+                            print(f"RSS/Atom parse failed for {source}: {parse_error}")
             except Exception as e:
                 print(f"RSS fetch failed for {source}: {e}")
                 continue

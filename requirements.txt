@@ -13,7 +13,7 @@ aiofiles==24.1.0
 python-multipart==0.0.12
 TA-Lib==0.6.7
 schedule==1.2.0
-feedparser==6.0.11
+atoma==0.0.17
 beautifulsoup4==4.12.2
 
 tweepy==4.14.0
