@@ -14,7 +14,7 @@ git branch -M main
 
 REM Add remote only if not already added
 git remote remove origin 2>nul
-git remote add origin https://github.com/rakishop/aiadvanceanalysisserver.git
+git remote add origin https://github.com/rakishop/algo_ai_server.git
 
 
 REM Push to GitHub
