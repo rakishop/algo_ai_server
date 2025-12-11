@@ -12,7 +12,7 @@ git branch -m main-temp main
 
 REM Stage and commit all changes
 git add .
-git commit -m "add feeds" --allow-empty
+git commit -m "new end point added for news" --allow-empty
 
 REM Add remote
 git remote remove origin 2>nul

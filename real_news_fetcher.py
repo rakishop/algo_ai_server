@@ -93,66 +93,101 @@ class RealNewsFetcher:
         return all_news
     
     def scrape_nse_announcements(self):
-        """Scrape NSE corporate announcements with proper session"""
-        try:
-            # Create session and get cookies first
-            session = requests.Session()
-            session.headers.update(self.headers)
-            
-            # First visit main page to get cookies
-            session.get("https://www.nseindia.com/companies-listing/corporate-filings-announcements", timeout=10)
-            
-            # Now make API call with cookies
-            url = "https://www.nseindia.com/api/corporates-corporateActions?index=equities"
-            response = session.get(url, timeout=10)
-            
-            if response.status_code == 200:
-                data = response.json()
-                announcements = []
-                
-                for item in data[:10]:  # Top 10 announcements
-                    announcements.append({
-                        'title': f"{item.get('symbol', '')} - {item.get('subject', '')}",
-                        'source': 'NSE_Announcements',
-                        'symbol': item.get('symbol', ''),
-                        'subject': item.get('subject', ''),
-                        'timestamp': datetime.now().isoformat()
-                    })
-                
-                session.close()
-                return announcements
-        except Exception as e:
-            print(f"NSE scraping failed: {e}")
-            return []
+        """Scrape NSE announcements from RSS feeds"""
+        announcements = []
+        
+        nse_rss_feeds = {
+            'announcements': 'https://nsearchives.nseindia.com/content/RSS/Online_announcements.xml',
+            'annual_reports': 'https://nsearchives.nseindia.com/content/RSS/Annual_Reports.xml',
+            'board_meetings': 'https://nsearchives.nseindia.com/content/RSS/Board_Meetings.xml',
+            'brsr_reports': 'https://nsearchives.nseindia.com/content/RSS/brsr.xml',
+            'corporate_actions': 'https://nsearchives.nseindia.com/content/RSS/Corporate_action.xml',
+            'corporate_governance': 'https://nsearchives.nseindia.com/content/RSS/Corporate_Governance.xml',
+            'daily_buyback': 'https://nsearchives.nseindia.com/content/RSS/Daily_Buyback.xml',
+            'financial_results': 'https://nsearchives.nseindia.com/content/RSS/Financial_Results.xml',
+            'insider_trading': 'https://nsearchives.nseindia.com/content/RSS/Insider_Trading.xml',
+            'investor_complaints': 'https://nsearchives.nseindia.com/content/RSS/Investor_Complaints.xml',
+            'offer_documents': 'https://nsearchives.nseindia.com/content/RSS/Offer_Documents.xml',
+            'related_party_transactions': 'https://nsearchives.nseindia.com/content/RSS/Related_Party_Trans.xml',
+            'sast_regulation29': 'https://nsearchives.nseindia.com/content/RSS/Sast_Regulation29.xml',
+            'sast_regulation31': 'https://nsearchives.nseindia.com/content/RSS/Sast_Regulation31.xml',
+            'sast_encumbrance': 'https://nsearchives.nseindia.com/content/RSS/Sast_ReasonForEncumbrance.xml',
+            'secretarial_compliance': 'https://nsearchives.nseindia.com/content/RSS/Secretarial_Compliance.xml',
+            'share_transfers': 'https://nsearchives.nseindia.com/content/RSS/Share_Transfers.xml',
+            'shareholding_pattern': 'https://nsearchives.nseindia.com/content/RSS/Shareholding_Pattern.xml',
+            'statement_deviation': 'https://nsearchives.nseindia.com/content/RSS/Statement_Of_Deviation.xml',
+            'unitholding_patterns': 'https://nsearchives.nseindia.com/content/RSS/Unitholding_Patterns.xml',
+            'voting_results': 'https://nsearchives.nseindia.com/content/RSS/Voting_Results.xml',
+            'circulars': 'https://nsearchives.nseindia.com/content/RSS/Circulars.xml'
+        }
+        
+        for feed_type, url in nse_rss_feeds.items():
+            try:
+                response = requests.get(url, headers=self.headers, timeout=10)
+                if response.status_code == 200:
+                    try:
+                        feed = atoma.parse_rss_bytes(response.content)
+                        for entry in feed.items:
+                            title = getattr(entry, 'title', '')
+                            description = getattr(entry, 'description', '')
+                            
+                            announcements.append({
+                                'title': f"NSE: {title}",
+                                'source': 'NSE_Announcements',
+                                'symbol': title,
+                                'subject': description,
+                                'link': getattr(entry, 'link', ''),
+                                'published': str(getattr(entry, 'pub_date', '')),
+                                'timestamp': datetime.now().isoformat(),
+                                'feed_type': feed_type
+                            })
+                    except Exception as parse_error:
+                        print(f"NSE {feed_type} RSS parse failed: {parse_error}")
+            except Exception as e:
+                print(f"NSE {feed_type} fetch failed: {e}")
+        
+        return announcements
     
     def scrape_bse_announcements(self):
-        """Scrape BSE announcements"""
-        try:
-            url = "https://www.bseindia.com/corporates/ann.html"
-            response = requests.get(url, headers=self.headers, timeout=10)
-            
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.content, 'html.parser')
-                announcements = []
-                
-                # Find announcement table rows
-                rows = soup.find_all('tr')[:10]  # Top 10
-                
-                for row in rows:
-                    cells = row.find_all('td')
-                    if len(cells) >= 3:
-                        announcements.append({
-                            'title': f"BSE: {cells[1].get_text(strip=True) if len(cells) > 1 else ''}",
-                            'source': 'BSE_Announcements',
-                            'company': cells[1].get_text(strip=True) if len(cells) > 1 else '',
-                            'subject': cells[2].get_text(strip=True) if len(cells) > 2 else '',
-                            'timestamp': datetime.now().isoformat()
-                        })
-                
-                return announcements
-        except Exception as e:
-            print(f"BSE scraping failed: {e}")
-            return []
+        """Scrape BSE announcements from RSS feeds"""
+        announcements = []
+        
+        bse_rss_feeds = {
+            'announcements': 'https://www.bseindia.com/data/xml/announcements.xml',
+            'notices': 'https://www.bseindia.com/data/xml/notices.xml',
+            'corporate_actions': 'https://www.bseindia.com/data/XML/CorpActionFeed.xml',
+            'voting_results': 'https://www.bseindia.com/data/XML/VotingResultFeed.xml'
+        }
+        
+        for feed_type, url in bse_rss_feeds.items():
+            try:
+                response = requests.get(url, headers=self.headers, timeout=10)
+                if response.status_code == 200:
+                    try:
+                        feed = atoma.parse_rss_bytes(response.content)
+                        for entry in feed.items:
+                            # Extract company name and scrip code from title
+                            title = getattr(entry, 'title', '')
+                            company = title.split('(')[0].strip() if '(' in title else title
+                            scrip_code = title.split('(')[1].split(')')[0] if '(' in title and ')' in title else ''
+                            
+                            announcements.append({
+                                'title': f"BSE: {company}",
+                                'source': 'BSE_Announcements',
+                                'company': company,
+                                'symbol': scrip_code,
+                                'subject': getattr(entry, 'description', ''),
+                                'link': getattr(entry, 'link', ''),
+                                'published': str(getattr(entry, 'pub_date', '')),
+                                'timestamp': datetime.now().isoformat(),
+                                'feed_type': feed_type
+                            })
+                    except Exception as parse_error:
+                        print(f"BSE {feed_type} RSS parse failed: {parse_error}")
+            except Exception as e:
+                print(f"BSE {feed_type} fetch failed: {e}")
+        
+        return announcements
     
     def scrape_tv_channel_news(self):
         """Scrape major TV channel websites"""

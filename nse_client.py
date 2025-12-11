@@ -356,6 +356,24 @@ class NSEClient:
             return {"error": str(e), "data": None}
         finally:
             session.close()
+    
+    def get_capital_market_large_deals(self) -> Dict[str, Any]:
+        """Fetch capital market large deals snapshot"""
+        session = self._get_fresh_session()
+        try:
+            response = session.get(
+                f"{self.base_url}/api/snapshot-capital-market-largedeal",
+                timeout=10
+            )
+            response.raise_for_status()
+            if response.text.strip():
+                return response.json()
+            else:
+                return {"error": "Empty response from NSE", "status_code": response.status_code}
+        except Exception as e:
+            return {"error": str(e), "data": None}
+        finally:
+            session.close()
 
     def get_all_indices(self) -> Dict[str, Any]:
         """Fetch all indices data"""

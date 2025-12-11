@@ -79,7 +79,7 @@ async def lifespan(app: FastAPI):
             print(f"Volume alert failed: {e}")
     
     schedule.every(30).minutes.do(run_telegram_alerts)
-    schedule.every(3).minutes.do(run_intelligent_derivative_analysis)  # Intelligent analysis every 15 minutes
+    schedule.every(3).minutes.do(run_intelligent_derivative_analysis)  # Intelligent analysis every 3 minutes
     schedule.every(10).minutes.do(run_volume_alerts)  # Reduced from 3 to 10 minutes
     
     # Smart alerts every 15 minutes
@@ -127,16 +127,43 @@ async def lifespan(app: FastAPI):
     
     schedule.every(10).minutes.do(run_twitter_monitor)
     
+    # NSE Large Deals monitoring every 5 minutes
+    def run_large_deals_monitor():
+        try:
+            from send_telegram import send_telegram_message
+            data = nse_client.get_capital_market_large_deals()
+            
+            if "error" not in data and 'LARGEDEAL' in data and data['LARGEDEAL']:
+                deals = data['LARGEDEAL']
+                message = f"🔥 NSE LARGE DEALS - {datetime.now().strftime('%H:%M')}\n\n"
+                for i, deal in enumerate(deals[:3], 1):  # Top 3 deals
+                    symbol = deal.get('symbol', deal.get('SYMBOL', ''))
+                    deal_type = deal.get('dealType', deal.get('DEAL_TYPE', ''))
+                    price = deal.get('price', deal.get('PRICE', 0))
+                    quantity = deal.get('quantity', deal.get('QUANTITY', 0))
+                    value = deal.get('value', deal.get('VALUE', 0))
+                    value_cr = value / 10000000
+                    message += f"{i}. {symbol} | {deal_type} | ₹{price:.1f} | {quantity:,} | ₹{value_cr:.1f}Cr\n"
+                
+                message += f"\n💰 Total {len(deals)} large deals"
+                send_telegram_message(message)
+                print(f"Large deals alert sent at {datetime.now().strftime('%H:%M:%S')}")
+        except Exception as e:
+            print(f"Large deals monitor failed: {e}")
+    
+    schedule.every(5).minutes.do(run_large_deals_monitor)
+    
     def run_scheduler():
-        print("Starting schedulers (Telegram: 30min, Derivatives: 15min, Volume: 10min)...")
+        print("Starting schedulers (Telegram: 30min, Derivatives: 3min, Volume: 10min)...")
         while True:
             try:
                 schedule.run_pending()
-                import time
                 time.sleep(60)
+            except KeyboardInterrupt:
+                print("Scheduler interrupted")
+                break
             except Exception as e:
                 print(f"Scheduler error: {e}")
-                import time
                 time.sleep(60)
     
     scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
@@ -150,6 +177,17 @@ async def lifespan(app: FastAPI):
     news_monitor_thread = threading.Thread(target=start_news_monitor, daemon=True)
     news_monitor_thread.start()
     
+    # Start NSE announcement monitoring for WebSocket broadcasting
+    def start_nse_monitor():
+        import asyncio
+        from nse_announcement_monitor import start_exchange_announcement_monitor
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(start_exchange_announcement_monitor())
+    
+    nse_monitor_thread = threading.Thread(target=start_nse_monitor, daemon=True)
+    nse_monitor_thread.start()
+    
     # Start keep-alive service for Render.com
     from keep_alive import KeepAlive
     server_url = os.getenv("RENDER_EXTERNAL_URL", "http://localhost:8000")
@@ -159,15 +197,39 @@ async def lifespan(app: FastAPI):
     print(f"Telegram scheduler started at {datetime.now().strftime('%H:%M:%S')}")
     print(f"Intelligent derivative analysis started (every 15 minutes during market hours)")
     print(f"Volume alert scheduler started (every 10 minutes)")
+    print(f"NSE Large Deals monitor started (every 5 minutes)")
     print(f"Instant news monitor started (every 1 minute)")
+    print(f"NSE & BSE announcement WebSocket monitor started (every 2 minutes)")
     print(f"Keep-alive service started for {server_url}")
     yield
     # Shutdown
-    stream_task.cancel()
+    print("🛑 Shutting down services...")
+    
+    # Stop all schedulers
+    schedule.clear()
+    
+    # Stop exchange announcement monitor
     try:
-        await stream_task
-    except asyncio.CancelledError:
+        from nse_announcement_monitor import stop_exchange_monitor
+        stop_exchange_monitor()
+    except Exception as e:
+        print(f"Error stopping exchange monitor: {e}")
+    
+    # Cancel WebSocket stream
+    if not stream_task.cancelled():
+        stream_task.cancel()
+        try:
+            await stream_task
+        except asyncio.CancelledError:
+            print("🛑 WebSocket stream cancelled")
+    
+    # Stop keep-alive service
+    try:
+        keep_alive.stop()
+    except:
         pass
+    
+    print("🛑 Server shutdown complete")
 
 app = FastAPI(
     title="NSE Market Data API", 
@@ -791,6 +853,199 @@ async def get_bse_announcements():
         from real_news_fetcher import RealNewsFetcher
         fetcher = RealNewsFetcher()
         return {"announcements": fetcher.scrape_bse_announcements()}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/feeds/rss")
+async def get_rss_feeds():
+    """Get RSS feeds manually"""
+    try:
+        from real_news_fetcher import RealNewsFetcher
+        fetcher = RealNewsFetcher()
+        return {"rss_news": fetcher.fetch_rss_news()}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/feeds/nse")
+async def get_nse_feeds():
+    """Get NSE feeds manually"""
+    try:
+        from real_news_fetcher import RealNewsFetcher
+        fetcher = RealNewsFetcher()
+        return {"nse_announcements": fetcher.scrape_nse_announcements()}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/feeds/bse")
+async def get_bse_feeds():
+    """Get BSE feeds manually"""
+    try:
+        from real_news_fetcher import RealNewsFetcher
+        fetcher = RealNewsFetcher()
+        return {"bse_announcements": fetcher.scrape_bse_announcements()}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/feeds/tv")
+async def get_tv_feeds():
+    """Get TV channel feeds manually"""
+    try:
+        from real_news_fetcher import RealNewsFetcher
+        fetcher = RealNewsFetcher()
+        return {"tv_news": fetcher.scrape_tv_channel_news()}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/feeds/all")
+async def get_all_feeds():
+    """Get all feeds manually"""
+    try:
+        from real_news_fetcher import RealNewsFetcher
+        fetcher = RealNewsFetcher()
+        return fetcher.get_all_news()
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/market/nse-large-deals")
+async def get_nse_large_deals():
+    """Get NSE large deals from capital market snapshot"""
+    try:
+        data = nse_client.get_capital_market_large_deals()
+        
+        if "error" in data:
+            return data
+        
+        # Format the response - include ALL available fields
+        formatted_deals = []
+        if 'LARGEDEAL' in data:
+            for deal in data['LARGEDEAL']:
+                formatted_deals.append({
+                    **deal,  # Include all original fields from XML feed
+                    'timestamp': datetime.now().isoformat(),
+                    # Standardized field names for consistency
+                    'symbol': deal.get('symbol', deal.get('SYMBOL', '')),
+                    'company_name': deal.get('companyName', deal.get('COMPANY_NAME', '')),
+                    'deal_type': deal.get('dealType', deal.get('DEAL_TYPE', '')),
+                    'quantity': deal.get('quantity', deal.get('QUANTITY', 0)),
+                    'price': deal.get('price', deal.get('PRICE', 0)),
+                    'value': deal.get('value', deal.get('VALUE', 0)),
+                    'client_name': deal.get('clientName', deal.get('CLIENT_NAME', '')),
+                    'deal_time': deal.get('dealTime', deal.get('DEAL_TIME', '')),
+                    'link': deal.get('link', deal.get('LINK', '')),
+                    'image_path': deal.get('imagePath', deal.get('IMAGE_PATH', '')),
+                    'xml_feed_data': deal  # Complete XML feed data
+                })
+        
+        return {
+            'success': True,
+            'total_deals': len(formatted_deals),
+            'large_deals': formatted_deals,
+            'last_updated': datetime.now().isoformat()
+        }
+            
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/feeds/large-deals")
+async def get_large_deals_feed():
+    """Get NSE large deals feed manually"""
+    try:
+        data = nse_client.get_capital_market_large_deals()
+        if "error" in data:
+            return data
+        
+        formatted_deals = []
+        if 'LARGEDEAL' in data:
+            for deal in data['LARGEDEAL']:
+                formatted_deals.append({
+                    **deal,
+                    'timestamp': datetime.now().isoformat()
+                })
+        
+        return {
+            'success': True,
+            'total_deals': len(formatted_deals),
+            'large_deals': formatted_deals,
+            'last_updated': datetime.now().isoformat()
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/market/nse-large-deals-telegram")
+async def send_nse_large_deals_telegram():
+    """Get NSE large deals and send Telegram notification"""
+    try:
+        from send_telegram import send_telegram_message
+        
+        data = nse_client.get_capital_market_large_deals()
+        
+        if "error" in data:
+            return data
+        
+        # Format deals for Telegram - include ALL available fields
+        formatted_deals = []
+        if 'LARGEDEAL' in data:
+            for deal in data['LARGEDEAL']:
+                formatted_deals.append({
+                    **deal,  # Include all original fields
+                    'timestamp': datetime.now().isoformat(),
+                    # Standardized field names for consistency
+                    'symbol': deal.get('symbol', deal.get('SYMBOL', '')),
+                    'company_name': deal.get('companyName', deal.get('COMPANY_NAME', '')),
+                    'deal_type': deal.get('dealType', deal.get('DEAL_TYPE', '')),
+                    'quantity': deal.get('quantity', deal.get('QUANTITY', 0)),
+                    'price': deal.get('price', deal.get('PRICE', 0)),
+                    'value': deal.get('value', deal.get('VALUE', 0)),
+                    'client_name': deal.get('clientName', deal.get('CLIENT_NAME', '')),
+                    'deal_time': deal.get('dealTime', deal.get('DEAL_TIME', '')),
+                    'link': deal.get('link', deal.get('LINK', '')),
+                    'image_path': deal.get('imagePath', deal.get('IMAGE_PATH', '')),
+                    'xml_feed_data': deal  # Store complete XML feed data
+                })
+        
+        # Send Telegram notification if deals found
+        if formatted_deals:
+            message = f"🔥 NSE LARGE DEALS ALERT - {datetime.now().strftime('%H:%M')}\n\n"
+            for i, deal in enumerate(formatted_deals[:5], 1):  # Top 5 deals
+                value_cr = deal.get('value', 0) / 10000000  # Convert to crores
+                message += f"{i}. {deal['symbol']} | {deal['deal_type']} | ₹{deal.get('price', 0):.1f} | {deal.get('quantity', 0):,} qty | ₹{value_cr:.1f}Cr\n"
+            
+            message += f"\n💰 Total {len(formatted_deals)} large deals detected"
+            
+            telegram_result = send_telegram_message(message)
+            
+            return {
+                'success': True,
+                'total_deals': len(formatted_deals),
+                'large_deals': formatted_deals,
+                'telegram_sent': telegram_result.get('ok', False),
+                'last_updated': datetime.now().isoformat()
+            }
+        else:
+            return {
+                'success': True,
+                'total_deals': 0,
+                'large_deals': [],
+                'telegram_sent': False,
+                'message': 'No large deals found',
+                'last_updated': datetime.now().isoformat()
+            }
+            
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/v1/feeds/telegram-test")
+async def test_telegram_feed():
+    """Test Telegram notification with sample data"""
+    try:
+        from send_telegram import send_telegram_message
+        message = f"🧪 TEST FEED - {datetime.now().strftime('%H:%M')}\n\nThis is a test message from feeds endpoint."
+        result = send_telegram_message(message)
+        return {
+            'success': result.get('ok', False),
+            'message': 'Test notification sent',
+            'telegram_response': result
+        }
     except Exception as e:
         return {"error": str(e)}
 
