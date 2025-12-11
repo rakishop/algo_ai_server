@@ -90,6 +90,8 @@ class RealNewsFetcher:
                 print(f"RSS fetch failed for {source}: {e}")
                 continue
         
+        # Sort RSS news by timestamp (newest first)
+        all_news.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
         return all_news
     
     def scrape_nse_announcements(self):
@@ -130,6 +132,7 @@ class RealNewsFetcher:
                         for entry in feed.items:
                             title = getattr(entry, 'title', '')
                             description = getattr(entry, 'description', '')
+                            pub_date = getattr(entry, 'pub_date', None)
                             
                             announcements.append({
                                 'title': f"NSE: {title}",
@@ -137,7 +140,7 @@ class RealNewsFetcher:
                                 'symbol': title,
                                 'subject': description,
                                 'link': getattr(entry, 'link', ''),
-                                'published': str(getattr(entry, 'pub_date', '')),
+                                'published': str(pub_date) if pub_date else '',
                                 'timestamp': datetime.now().isoformat(),
                                 'feed_type': feed_type
                             })
@@ -146,6 +149,8 @@ class RealNewsFetcher:
             except Exception as e:
                 print(f"NSE {feed_type} fetch failed: {e}")
         
+        # Sort NSE announcements by published date (newest first)
+        announcements.sort(key=lambda x: x.get('published', ''), reverse=True)
         return announcements
     
     def scrape_bse_announcements(self):
@@ -170,6 +175,7 @@ class RealNewsFetcher:
                             title = getattr(entry, 'title', '')
                             company = title.split('(')[0].strip() if '(' in title else title
                             scrip_code = title.split('(')[1].split(')')[0] if '(' in title and ')' in title else ''
+                            pub_date = getattr(entry, 'pub_date', None)
                             
                             announcements.append({
                                 'title': f"BSE: {company}",
@@ -178,7 +184,7 @@ class RealNewsFetcher:
                                 'symbol': scrip_code,
                                 'subject': getattr(entry, 'description', ''),
                                 'link': getattr(entry, 'link', ''),
-                                'published': str(getattr(entry, 'pub_date', '')),
+                                'published': str(pub_date) if pub_date else '',
                                 'timestamp': datetime.now().isoformat(),
                                 'feed_type': feed_type
                             })
@@ -187,6 +193,8 @@ class RealNewsFetcher:
             except Exception as e:
                 print(f"BSE {feed_type} fetch failed: {e}")
         
+        # Sort BSE announcements by published date (newest first)
+        announcements.sort(key=lambda x: x.get('published', ''), reverse=True)
         return announcements
     
     def scrape_tv_channel_news(self):
@@ -249,6 +257,9 @@ class RealNewsFetcher:
         if tv_news:
             all_news.extend(tv_news)
         
+        # Sort all news by timestamp (newest first)
+        all_news.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+        
         return {
             'total_news': len(all_news),
             'rss_count': len(rss_news),
@@ -256,7 +267,8 @@ class RealNewsFetcher:
             'bse_count': len(bse_news) if bse_news else 0,
             'tv_count': len(tv_news) if tv_news else 0,
             'news': all_news,
-            'last_updated': datetime.now().isoformat()
+            'last_updated': datetime.now().isoformat(),
+            'filter_period': 'All available data'
         }
 
 def fetch_real_news():
